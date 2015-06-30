@@ -15,19 +15,19 @@ import java.sql.SQLException;
  */
 public class TestDB {
 
-  public static DataSource createPopulatedDataSource() throws SQLException {
+  public static DataSource createPopulatedDataSource(int rows) throws SQLException {
     DataSource dataSource = createDataSource();
 
     try (Connection connection = dataSource.getConnection()) {
       applySchema(connection);
-      insertTestData(connection, 100);
+      insertTestData(connection, rows);
     }
 
     return dataSource;
   }
 
   private static DataSource createDataSource() throws SQLException {
-    return JdbcConnectionPool.create("jdbc:h2:mem:test", "user", "pass");
+    return JdbcConnectionPool.create("jdbc:h2:mem:", "user", "pass");
   }
 
   private static void applySchema(Connection connection) throws SQLException {
@@ -42,7 +42,7 @@ public class TestDB {
     String sql = "INSERT INTO data VALUES (?, ?)";
 
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      for (int i = 0; i <= rows; i++) {
+      for (int i = 1; i <= rows; i++) {
         statement.setInt(1, i);
         statement.setString(2, Integer.toString(i));
         statement.executeUpdate();

@@ -23,7 +23,7 @@ public class JDBCTest {
 
   @Before
   public void createDatabase() throws SQLException {
-    dataSource = TestDB.createPopulatedDataSource();
+    dataSource = TestDB.createPopulatedDataSource(100);
   }
 
   @Test
