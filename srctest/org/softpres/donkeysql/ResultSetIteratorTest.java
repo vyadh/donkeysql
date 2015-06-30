@@ -11,6 +11,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.StrictAssertions.assertThat;
 
@@ -20,10 +23,12 @@ import static org.assertj.core.api.StrictAssertions.assertThat;
 public class ResultSetIteratorTest {
 
   private DataSource dataSource;
+  private RowMapper<Integer> intMapper;
 
   @Before
   public void setup() throws Exception {
     dataSource = TestDB.createPopulatedDataSource(5);
+    intMapper = resultSet -> resultSet.getInt("key");
   }
 
   @Test
@@ -31,7 +36,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT 1";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
 
       assertThat(iterator.hasNext()).isTrue();
     });
@@ -43,7 +48,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT 1";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
 
       assertThat(iterator.hasNext()).isTrue();
       assertThat(iterator.hasNext()).isTrue();
@@ -56,7 +61,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT 42";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> rs.getInt(1));
 
       assertThat(iterator.next()).isEqualTo(42);
     });
@@ -67,7 +72,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT key FROM data";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
 
       assertThat(iterator.next()).isEqualTo(1);
       assertThat(iterator.next()).isEqualTo(2);
@@ -80,7 +85,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT key FROM data WHERE key <= 2";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
 
       assertThat(iterator.hasNext()).isTrue();
       assertThat(iterator.hasNext()).isTrue();
@@ -97,7 +102,7 @@ public class ResultSetIteratorTest {
     String sql = "SELECT 1";
 
     with(sql, resultSet -> {
-      ResultSetIterator iterator = new ResultSetIterator(resultSet);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> rs.getInt(1));
 
       iterator.hasNext();
       assertThat(resultSet.isClosed()).isFalse();
@@ -107,6 +112,24 @@ public class ResultSetIteratorTest {
 
       iterator.hasNext();
       assertThat(resultSet.isClosed()).isTrue();
+    });
+  }
+
+  @Test
+  public void extractSingleObject() throws SQLException {
+    String sql = "SELECT key,value FROM data WHERE key = ?";
+
+    withStatement(sql, statement -> {
+      statement.setInt(1, 3);
+      ResultSet resultSet = statement.executeQuery();
+
+      RowMapper<KeyValue> mapper = rs -> new KeyValue(rs.getInt("key"), rs.getString("value"));
+      ResultSetIterator<KeyValue> iterator = new ResultSetIterator<>(resultSet, mapper);
+
+      KeyValue entry = iterator.next();
+
+      assertThat(entry.key).isEqualTo(3);
+      assertThat(entry.value).isEqualTo("3");
     });
   }
 
@@ -127,6 +150,16 @@ public class ResultSetIteratorTest {
 
   private interface SQLConsumer<T> {
     void apply(T t) throws SQLException;
+  }
+
+  private static class KeyValue {
+    int key;
+    String value;
+
+    public KeyValue(int key, String value) {
+      this.key = key;
+      this.value = value;
+    }
   }
 
 }

@@ -14,13 +14,15 @@ import static org.softpres.donkeysql.ResultSetIterator.Next.*;
  * Iterator over the results of a ResultSetQuery.
  * This class is not thread safe.
  */
-public class ResultSetIterator implements Iterator<Integer>, AutoCloseable {
+public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
 
   private final ResultSet resultSet;
+  private final RowMapper<T> mapper;
   private Next next;
 
-  public ResultSetIterator(ResultSet resultSet) {
+  public ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
     this.resultSet = resultSet;
+    this.mapper = mapper;
     next = UNKNOWN;
   }
 
@@ -32,6 +34,9 @@ public class ResultSetIterator implements Iterator<Integer>, AutoCloseable {
     } catch (SQLException e) {
       closeQuietly();
       throw new UncheckedSQLException(e);
+    } catch (Exception e) {
+      closeQuietly();
+      throw e;
     }
   }
 
@@ -45,16 +50,19 @@ public class ResultSetIterator implements Iterator<Integer>, AutoCloseable {
   }
 
   @Override
-  public Integer next() {
+  public T next() {
     try {
       if (hasNext()) {
-        int result = resultSet.getInt(1);
-        next = UNKNOWN;
-        return result;
+        return mapper.apply(resultSet);
       }
     } catch (SQLException e) {
       closeQuietly();
       throw new UncheckedSQLException(e);
+    } catch (Exception e) {
+      closeQuietly();
+      throw e;
+    } finally {
+      next = UNKNOWN;
     }
     throw new NoSuchElementException();
   }

@@ -6,6 +6,7 @@ package org.softpres.donkeysql;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.verification.VerificationMode;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,14 +22,13 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class ResultSetIteratorFailuresTest {
 
-  private ResultSetIterator iterator;
+  private ResultSetIterator<Integer> iterator;
   private ResultSet resultSet;
 
   @Before
   public void setup() throws SQLException {
     resultSet = mock(ResultSet.class);
-
-    iterator = new ResultSetIterator(resultSet);
+    iterator = new ResultSetIterator<>(resultSet, rs -> rs.getInt(1));
   }
 
   @Test
@@ -37,7 +37,7 @@ public class ResultSetIteratorFailuresTest {
 
     catchThrowable(iterator::next);
 
-    verify(resultSet).close();
+    verify(resultSet, atLeastOnce()).close();
   }
 
   @Test
@@ -51,14 +51,25 @@ public class ResultSetIteratorFailuresTest {
   }
 
   @Test
-  @Ignore
-  public void failureToConvertToObjectClosesResultSet() {
+  public void failureToConvertWithExceptionClosesResultSet() throws SQLException {
+    when(resultSet.next()).thenReturn(true);
+
+    ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> {
+      throw new IllegalStateException("error");
+    });
+
+    Throwable throwable = catchThrowable(iterator::next);
+
+    verify(resultSet, atLeastOnce()).close();
+    assertThat(throwable)
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("error");
   }
 
   @Test
   @SuppressWarnings("EmptyTryBlock")
   public void autoClosableContractRespected() throws SQLException {
-    try (ResultSetIterator rsi = iterator) {
+    try (ResultSetIterator<Integer> rsi = iterator) {
     }
 
     verify(resultSet).close();
