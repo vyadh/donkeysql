@@ -11,11 +11,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import static org.assertj.core.api.StrictAssertions.assertThat;
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link ResultSetIterator}.
@@ -132,6 +131,20 @@ public class ResultSetIteratorTest {
       assertThat(entry.value).isEqualTo("3");
     });
   }
+
+  @Test
+  public void stream() throws SQLException {
+    String sql = "SELECT key FROM data WHERE key <= 5";
+
+    with(sql, resultSet -> {
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
+
+      List<Integer> result = iterator.stream().collect(toList());
+
+      assertThat(result).containsOnly(1, 2, 3, 4, 5);
+    });
+  }
+
 
   private void with(String sql, SQLConsumer<ResultSet> consumer) throws SQLException {
     withStatement(sql, statement -> {

@@ -7,6 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.softpres.donkeysql.ResultSetIterator.Next.*;
 
@@ -83,6 +87,11 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
     UNKNOWN,
     FOUND,
     FINISHED
+  }
+
+  public Stream<T> stream() {
+    Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(this, 0);
+    return StreamSupport.stream(spliterator, false);
   }
 
 }
