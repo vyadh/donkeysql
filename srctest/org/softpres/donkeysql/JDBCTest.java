@@ -23,20 +23,20 @@ public class JDBCTest {
 
   @Before
   public void createDatabase() throws SQLException {
-    dataSource = TestDB.createPopulatedDataSource(100);
+    dataSource = TestDB.createPopulatedDataSource();
   }
 
   @Test
   public void countFromOneHundredEntries() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      String query = "SELECT count(1) as size FROM data WHERE key > ?";
+      String query = "SELECT count(1) as size FROM animals WHERE id <= ?";
 
       try (PreparedStatement statement = connection.prepareStatement(query)) {
-        statement.setInt(1, 40);
+        statement.setInt(1, 5);
         ResultSet resultSet = statement.executeQuery();
 
         resultSet.next();
-        assertThat(resultSet.getInt("size")).isEqualTo(60);
+        assertThat(resultSet.getInt("size")).isEqualTo(5);
       }
     }
   }

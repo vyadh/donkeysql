@@ -4,9 +4,7 @@
 package org.softpres.donkeysql;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.verification.VerificationMode;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

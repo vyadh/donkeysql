@@ -15,12 +15,12 @@ import java.sql.SQLException;
  */
 public class TestDB {
 
-  public static DataSource createPopulatedDataSource(int rows) throws SQLException {
+  public static DataSource createPopulatedDataSource() throws SQLException {
     DataSource dataSource = createDataSource();
 
     try (Connection connection = dataSource.getConnection()) {
       applySchema(connection);
-      insertTestData(connection, rows);
+      insertTestData(connection);
     }
 
     return dataSource;
@@ -31,23 +31,37 @@ public class TestDB {
   }
 
   private static void applySchema(Connection connection) throws SQLException {
-    String sql = "CREATE TABLE data (key INTEGER PRIMARY KEY, value VARCHAR(100))";
+//    String sql = "CREATE TABLE data (key INTEGER PRIMARY KEY, value VARCHAR(100))";
+    String sql = "CREATE TABLE animals (" +
+          "id INTEGER PRIMARY KEY, " +
+          "name VARCHAR(20), " +
+          "legs INTEGER)";
 
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.executeUpdate();
     }
   }
 
-  private static void insertTestData(Connection connection, int rows) throws SQLException {
-    String sql = "INSERT INTO data VALUES (?, ?)";
+  private static void insertTestData(Connection connection) throws SQLException {
+    String sql = "INSERT INTO animals VALUES (?, ?, ?)";
 
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      for (int i = 1; i <= rows; i++) {
-        statement.setInt(1, i);
-        statement.setString(2, Integer.toString(i));
-        statement.executeUpdate();
-      }
+      insert(statement, 1, "dog", 4);
+      insert(statement, 2, "cat", 4);
+      insert(statement, 3, "mouse", 4);
+      insert(statement, 4, "bird", 2);
+      insert(statement, 5, "mouse", 4);
+      insert(statement, 6, "worm", 0);
+      insert(statement, 7, "spider", 8);
+      insert(statement, 8, "ant", 6);
     }
+  }
+
+  private static void insert(PreparedStatement statement, int id, String name, int legs) throws SQLException {
+    statement.setInt(1, id);
+    statement.setString(2, name);
+    statement.setInt(3, legs);
+    statement.executeUpdate();
   }
 
 }

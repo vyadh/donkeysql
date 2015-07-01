@@ -26,8 +26,8 @@ public class ResultSetIteratorTest {
 
   @Before
   public void setup() throws Exception {
-    dataSource = TestDB.createPopulatedDataSource(5);
-    intMapper = resultSet -> resultSet.getInt("key");
+    dataSource = TestDB.createPopulatedDataSource();
+    intMapper = resultSet -> resultSet.getInt("id");
   }
 
   @Test
@@ -68,7 +68,7 @@ public class ResultSetIteratorTest {
 
   @Test
   public void multipleItemsCanBeTakenWithoutCallToHasNext() throws SQLException {
-    String sql = "SELECT key FROM data";
+    String sql = "SELECT id FROM animals";
 
     with(sql, resultSet -> {
       ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
@@ -81,7 +81,7 @@ public class ResultSetIteratorTest {
 
   @Test
   public void hasNextAndNextWorkInSynchrony() throws SQLException {
-    String sql = "SELECT key FROM data WHERE key <= 2";
+    String sql = "SELECT id FROM animals WHERE id <= 2";
 
     with(sql, resultSet -> {
       ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
@@ -116,25 +116,25 @@ public class ResultSetIteratorTest {
 
   @Test
   public void extractSingleObject() throws SQLException {
-    String sql = "SELECT key,value FROM data WHERE key = ?";
+    String sql = "SELECT name,legs FROM animals WHERE name = ?";
 
     withStatement(sql, statement -> {
-      statement.setInt(1, 3);
+      statement.setString(1, "dog");
       ResultSet resultSet = statement.executeQuery();
 
-      RowMapper<KeyValue> mapper = rs -> new KeyValue(rs.getInt("key"), rs.getString("value"));
-      ResultSetIterator<KeyValue> iterator = new ResultSetIterator<>(resultSet, mapper);
+      RowMapper<Animal> mapper = rs -> new Animal(rs.getString("name"), rs.getInt("legs"));
+      ResultSetIterator<Animal> iterator = new ResultSetIterator<>(resultSet, mapper);
 
-      KeyValue entry = iterator.next();
+      Animal entry = iterator.next();
 
-      assertThat(entry.key).isEqualTo(3);
-      assertThat(entry.value).isEqualTo("3");
+      assertThat(entry.name).isEqualTo("dog");
+      assertThat(entry.legs).isEqualTo(4);
     });
   }
 
   @Test
   public void stream() throws SQLException {
-    String sql = "SELECT key FROM data WHERE key <= 5";
+    String sql = "SELECT id FROM animals WHERE id <= 5";
 
     with(sql, resultSet -> {
       ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
@@ -165,13 +165,13 @@ public class ResultSetIteratorTest {
     void apply(T t) throws SQLException;
   }
 
-  private static class KeyValue {
-    int key;
-    String value;
+  private static class Animal {
+    String name;
+    int legs;
 
-    public KeyValue(int key, String value) {
-      this.key = key;
-      this.value = value;
+    public Animal(String name, int legs) {
+      this.name = name;
+      this.legs = legs;
     }
   }
 
