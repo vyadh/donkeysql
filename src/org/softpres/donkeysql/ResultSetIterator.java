@@ -122,4 +122,14 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
     return stream.onClose(this::closeQuietly);
   }
 
+  /** A last-ditch effort to clean up in case it wasn't another way. */
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+
+    if (next != FINISHED) {
+      closeQuietly();
+    }
+  }
+
 }
