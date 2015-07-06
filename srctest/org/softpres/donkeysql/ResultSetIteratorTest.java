@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,6 +112,26 @@ public class ResultSetIteratorTest {
 
       iterator.hasNext();
       assertThat(resultSet.isClosed()).isTrue();
+    });
+  }
+
+  @Test
+  public void onCloseIsCalledAtEndOfStream() throws SQLException {
+    String sql = "SELECT 1";
+
+    with(sql, resultSet -> {
+      AtomicBoolean closed = new AtomicBoolean(false);
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> rs.getInt(1))
+            .onClose(() -> closed.set(true));
+
+      iterator.hasNext();
+      assertThat(closed.get()).isFalse();
+
+      iterator.next();
+      assertThat(closed.get()).isFalse();
+
+      iterator.hasNext();
+      assertThat(closed.get()).isTrue();
     });
   }
 

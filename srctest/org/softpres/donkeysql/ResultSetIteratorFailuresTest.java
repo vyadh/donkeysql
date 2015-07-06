@@ -82,4 +82,28 @@ public class ResultSetIteratorFailuresTest {
     assertThat(throwable).isInstanceOf(NoSuchElementException.class);
   }
 
+  @Test
+  public void resultSetIsStillClosedIfOnCloseHandlerThrowsException() throws SQLException {
+    ResultSet resultSet = mock(ResultSet.class);
+    ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> 0).onClose(() -> {
+      throw new Exception("boom");
+    });
+
+    catchThrowable(iterator::close);
+
+    verify(resultSet).close();
+  }
+
+  @Test
+  public void onCloseHandlerIsStillClosedIfResultSetCloseThrowsException() throws Exception {
+    AutoCloseable onClose = mock(AutoCloseable.class);
+    ResultSet resultSet = mock(ResultSet.class);
+    doThrow(new SQLException("boom")).when(resultSet).close();
+    ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> 0).onClose(onClose);
+
+    catchThrowable(iterator::close);
+
+    verify(onClose).close();
+  }
+
 }

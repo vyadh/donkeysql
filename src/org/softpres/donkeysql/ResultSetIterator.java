@@ -5,10 +5,7 @@ package org.softpres.donkeysql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -23,11 +20,18 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   private final ResultSet resultSet;
   private final RowMapper<T> mapper;
   private Next next;
+  private AutoCloseable onClose;
 
   public ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
     this.resultSet = resultSet;
     this.mapper = mapper;
     next = UNKNOWN;
+    onClose = () -> {};
+  }
+
+  public ResultSetIterator<T> onClose(AutoCloseable onClose) {
+    this.onClose = onClose;
+    return this;
   }
 
   @Override
@@ -80,7 +84,28 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
 
   @Override
   public void close() throws SQLException {
-    resultSet.close();
+    Optional<Exception> onCloseError = close(onClose);
+
+    try {
+      resultSet.close();
+    } catch (SQLException e) {
+      onCloseError.ifPresent(e::addSuppressed);
+      throw e;
+    }
+
+    if (onCloseError.isPresent()) {
+      Exception cause = onCloseError.get();
+      throw new SQLException(cause.getMessage(), cause);
+    }
+  }
+
+  private Optional<Exception> close(AutoCloseable closeable) {
+    try {
+      closeable.close();
+      return Optional.empty();
+    } catch (Exception e) {
+      return Optional.of(e);
+    }
   }
 
   enum Next {
