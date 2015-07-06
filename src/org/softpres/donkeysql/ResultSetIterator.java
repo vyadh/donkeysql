@@ -84,6 +84,8 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
 
   @Override
   public void close() throws SQLException {
+    next = FINISHED;
+
     Optional<Exception> onCloseError = close(onClose);
 
     try {

@@ -12,10 +12,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.StrictAssertions.assertThatThrownBy;
+import static org.assertj.core.api.StrictAssertions.catchThrowable;
 
 /**
  * Unit tests for {@link ResultSetIterator}.
@@ -166,6 +169,22 @@ public class ResultSetIteratorTest {
     });
   }
 
+  @Test
+  public void prematurelyEndIterationWhenClosed() throws SQLException {
+    String sql = "SELECT id FROM animals WHERE id <= 5";
+
+    with(sql, resultSet -> {
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
+
+      assertThat(iterator.next()).isEqualTo(1);
+      assertThat(iterator.hasNext()).isEqualTo(true);
+
+      iterator.close();
+
+      assertThat(iterator.hasNext()).isEqualTo(false);
+      assertThatThrownBy(iterator::next).isInstanceOf(NoSuchElementException.class);
+    });
+  }
 
   private void with(String sql, SQLConsumer<ResultSet> consumer) throws SQLException {
     withStatement(sql, statement -> {
