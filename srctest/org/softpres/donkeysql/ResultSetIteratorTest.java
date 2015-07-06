@@ -14,11 +14,11 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.StrictAssertions.assertThatThrownBy;
-import static org.assertj.core.api.StrictAssertions.catchThrowable;
 
 /**
  * Unit tests for {@link ResultSetIterator}.
@@ -166,6 +166,21 @@ public class ResultSetIteratorTest {
       List<Integer> result = iterator.stream().collect(toList());
 
       assertThat(result).containsOnly(1, 2, 3, 4, 5);
+    });
+  }
+
+  @Test
+  public void usingTryWithResourcesOnStreamClosesResultSet() throws SQLException {
+    String sql = "SELECT id FROM animals WHERE id <= 5";
+
+    with(sql, resultSet -> {
+      ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, intMapper);
+
+      try (Stream<Integer> s = iterator.stream()) {
+        s.findFirst(); // There are more, but just resolve the first here
+      }
+
+      assertThat(resultSet.isClosed()).isEqualTo(true);
     });
   }
 

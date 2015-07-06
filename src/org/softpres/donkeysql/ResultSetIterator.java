@@ -118,7 +118,8 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
 
   public Stream<T> stream() {
     Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(this, 0);
-    return StreamSupport.stream(spliterator, false);
+    Stream<T> stream = StreamSupport.stream(spliterator, false);
+    return stream.onClose(this::closeQuietly);
   }
 
 }
