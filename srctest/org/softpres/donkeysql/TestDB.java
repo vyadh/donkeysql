@@ -50,10 +50,12 @@ public class TestDB {
       insert(statement, 2, "cat", 4);
       insert(statement, 3, "mouse", 4);
       insert(statement, 4, "bird", 2);
-      insert(statement, 5, "mouse", 4);
+      insert(statement, 5, "fish", 0);
       insert(statement, 6, "worm", 0);
       insert(statement, 7, "spider", 8);
       insert(statement, 8, "ant", 6);
+      insert(statement, 9, "horse", 4);
+      insert(statement, 10, "beetle", 6);
     }
   }
 
