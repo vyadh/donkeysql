@@ -29,7 +29,7 @@ public class JDBCTest {
   @Test
   public void countFromOneHundredEntries() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      String query = "SELECT count(1) as size FROM animals WHERE id <= ?";
+      String query = "SELECT count(1) AS size FROM animals WHERE id <= ?";
 
       try (PreparedStatement statement = connection.prepareStatement(query)) {
         statement.setInt(1, 5);

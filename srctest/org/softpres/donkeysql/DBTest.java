@@ -31,7 +31,7 @@ public class DBTest {
   public void queryWithNoParameters() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       List<Integer> results = DB.with(connection)
-            .query("select id from animals")
+            .query("SELECT id FROM animals")
             .map(resultSet -> resultSet.getInt("id"))
             .stream()
             .collect(toList());
@@ -44,7 +44,7 @@ public class DBTest {
   public void queryWithParameters() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       List<Integer> results = DB.with(connection)
-            .query("select id from animals where id <= ? or id >= ?")
+            .query("SELECT id FROM animals WHERE id <= ? OR id >= ?")
             .params(2, 9)
             .map(resultSet -> resultSet.getInt("id"))
             .stream()
@@ -58,7 +58,7 @@ public class DBTest {
   public void queryWithTwoParameterStylesIsUnsupported() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       Throwable throwable = catchThrowable(() -> DB.with(connection)
-            .query("select id from animals where id < :id")
+            .query("SELECT id FROM animals WHERE id < :id")
             .param("id", 5)
             .params(1, 5)
             .map(resultSet -> resultSet.getInt("id"))
@@ -74,7 +74,7 @@ public class DBTest {
   public void queryWithUnspecifiedParameter() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       Throwable throwable = catchThrowable(() -> DB.with(connection)
-            .query("select id from animals where name = :name")
+            .query("SELECT id FROM animals WHERE name = :name")
             .map(resultSet -> resultSet.getString("id"))
             .stream()
             .collect(toList()));
@@ -87,7 +87,7 @@ public class DBTest {
   public void queryWithNamedParameters() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       List<String> results = DB.with(connection)
-            .query("select name from animals where id > :five and name like :name")
+            .query("SELECT name FROM animals WHERE id > :five AND name LIKE :name")
             .param("five", 5)
             .param("name", "b%")
             .map(resultSet -> resultSet.getString("name"))
@@ -102,7 +102,7 @@ public class DBTest {
   public void queryWithMapping() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       List<String> results = DB.with(connection)
-            .query("select id, name from animals where name like ?")
+            .query("SELECT id, name FROM animals WHERE name LIKE ?")
             .params("%or%")
             .map(resultSet -> resultSet.getInt("id") + "=" + resultSet.getString("name"))
             .stream()
@@ -116,7 +116,7 @@ public class DBTest {
   public void nonSuppledParameters() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       Throwable error = catchThrowable(() -> DB.with(connection)
-            .query("select id from animals where id = ? or id = ?")
+            .query("SELECT id FROM animals WHERE id = ? OR id = ?")
             .params(1) // Only one
             .map(resultSet -> resultSet.getInt("id")));
 
@@ -128,7 +128,7 @@ public class DBTest {
   public void tooManyParameters() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
       Throwable error = catchThrowable(() -> DB.with(connection)
-            .query("select id from animals where id = ? or id = ?")
+            .query("SELECT id FROM animals WHERE id = ? OR id = ?")
             .params(1, 2, 3) // Extra one
             .map(resultSet -> resultSet.getInt("id")));
 

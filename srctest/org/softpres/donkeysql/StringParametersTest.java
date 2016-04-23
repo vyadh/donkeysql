@@ -23,40 +23,40 @@ public class StringParametersTest {
 
   @Test
   public void parametersWithNoParameters() {
-    assertThat(parameters("select * from table where id > 100"))
+    assertThat(parameters("SELECT * FROM table WHERE id > 100"))
           .isEmpty();
   }
 
   @Test
   public void parametersWithOneParameter() {
-    assertThat(parameters("stuff where something < :id"))
+    assertThat(parameters("stuff WHERE something < :id"))
           .containsExactly("id");
   }
 
   @Test
   public void parametersWithMultipleParameters() {
-    assertThat(parameters("select stuff from table where something < :abc and other = :xyz"))
+    assertThat(parameters("SELECT stuff FROM table WHERE something < :abc AND other = :xyz"))
           .containsExactly("abc", "xyz");
   }
 
   @Test
   public void parametersWithDuplicateParameters() {
-    assertThat(parameters("select count(1) from people where :age >= 18 and :age <= 60"))
+    assertThat(parameters("SELECT count(1) FROM people WHERE :age >= 18 AND :age <= 60"))
           .containsExactly("age", "age");
   }
 
   @Test
   public void parametersWithRoundBracketsEitherSide() {
-    assertThat(parameters("select count(1) from people where (:low >= 18 and 60 > :high)"))
+    assertThat(parameters("SELECT count(1) FROM people WHERE (:low >= 18 AND 60 > :high)"))
           .containsExactly("low", "high");
   }
 
   @Test
   public void parametersWithComplexStatement() {
     assertThat(parameters(
-          "select count(1) from people where" +
-                " (name like :name-pattern) and" +
-                " ((:age >= 18 and :age <= 60) or (sibling like :sister))"))
+          "SELECT count(1) FROM people WHERE" +
+                " (name LIKE :name-pattern) AND" +
+                " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister))"))
           .containsExactly("name-pattern", "age", "age", "sister");
   }
 
@@ -69,21 +69,21 @@ public class StringParametersTest {
           normalise("something"))
           .isEqualTo("something");
     assertThat(
-          normalise("select * from people where ages > ?"))
-          .isEqualTo("select * from people where ages > ?");
+          normalise("SELECT * FROM people WHERE ages > ?"))
+          .isEqualTo("SELECT * FROM people WHERE ages > ?");
   }
 
   @Test
   public void normaliseWithParameters() {
     assertThat(
-          normalise("select * from table where column = :something"))
-          .isEqualTo("select * from table where column = ?");
+          normalise("SELECT * FROM table WHERE column = :something"))
+          .isEqualTo("SELECT * FROM table WHERE column = ?");
     assertThat(
-          normalise("select * from people where ages < :too-young"))
-          .isEqualTo("select * from people where ages < ?");
+          normalise("SELECT * FROM people WHERE ages < :too-young"))
+          .isEqualTo("SELECT * FROM people WHERE ages < ?");
     assertThat(
-          normalise("string :with many :params and (:some with :brackets)"))
-          .isEqualTo("string ? many ? and (? with ?)");
+          normalise("string :with many :params AND (:some with :brackets)"))
+          .isEqualTo("string ? many ? AND (? with ?)");
   }
 
 }
