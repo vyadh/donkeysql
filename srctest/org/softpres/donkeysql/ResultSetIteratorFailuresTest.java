@@ -86,7 +86,7 @@ public class ResultSetIteratorFailuresTest {
   public void resultSetIsStillClosedIfOnCloseHandlerThrowsException() throws SQLException {
     ResultSet resultSet = mock(ResultSet.class);
     ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> 0).onClose(() -> {
-      throw new Exception("boom");
+      throw new SQLException("boom");
     });
 
     catchThrowable(iterator::close);
@@ -96,7 +96,7 @@ public class ResultSetIteratorFailuresTest {
 
   @Test
   public void onCloseHandlerIsStillClosedIfResultSetCloseThrowsException() throws Exception {
-    AutoCloseable onClose = mock(AutoCloseable.class);
+    SQLResource onClose = mock(SQLResource.class);
     ResultSet resultSet = mock(ResultSet.class);
     doThrow(new SQLException("boom")).when(resultSet).close();
     ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> 0).onClose(onClose);

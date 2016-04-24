@@ -20,7 +20,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   private final ResultSet resultSet;
   private final RowMapper<T> mapper;
   private Next next;
-  private AutoCloseable onClose;
+  private SQLResource onClose;
 
   public ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
     this.resultSet = resultSet;
@@ -29,7 +29,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
     onClose = () -> {};
   }
 
-  public ResultSetIterator<T> onClose(AutoCloseable onClose) {
+  ResultSetIterator<T> onClose(SQLResource onClose) {
     this.onClose = onClose;
     return this;
   }
@@ -86,28 +86,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   public void close() throws SQLException {
     next = FINISHED;
 
-    Optional<Exception> onCloseError = close(onClose);
-
-    try {
-      resultSet.close();
-    } catch (SQLException e) {
-      onCloseError.ifPresent(e::addSuppressed);
-      throw e;
-    }
-
-    if (onCloseError.isPresent()) {
-      Exception cause = onCloseError.get();
-      throw new SQLException(cause.getMessage(), cause);
-    }
-  }
-
-  private Optional<Exception> close(AutoCloseable closeable) {
-    try {
-      closeable.close();
-      return Optional.empty();
-    } catch (Exception e) {
-      return Optional.of(e);
-    }
+    try (ResultSet rs = resultSet; SQLResource other = onClose) { }
   }
 
   enum Next {

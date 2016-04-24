@@ -80,14 +80,14 @@ public class DB {
         ResultSet resultSet = statement.executeQuery();
 
         return new ResultSetIterator<>(resultSet, mapper)
-              .onClose(createAutoClosable(statement));
+              .onClose(asSQLResource(statement));
 
       } catch (SQLException e) {
         throw new UncheckedSQLException(e);
       }
     }
 
-    private AutoCloseable createAutoClosable(PreparedStatement statement) {
+    private SQLResource asSQLResource(PreparedStatement statement) {
       return () -> {
         if (autoClose) {
           try (PreparedStatement s = statement; Connection c = connection) { }
