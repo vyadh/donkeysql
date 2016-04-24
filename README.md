@@ -24,7 +24,7 @@ Examples
 A simple query:
 
 ```java
-  List<Animal> results = DB.with(connection)
+  List<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs > 4")
         .map(resultSet -> new Animal(
               resultSet.getString("name"),
@@ -37,7 +37,7 @@ A simple query:
 A query with `PreparedStatement`-style parameters:
 
 ```java
-  List<Animal> results = DB.with(connection)
+  List<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs >= ? AND name LIKE ?")
         .params(5, "s%")
         .map(resultSet -> new Animal(
@@ -51,7 +51,7 @@ A query with `PreparedStatement`-style parameters:
 A query with named parameter-style parameters:
 
 ```java
-  List<Animal> results = DB.with(connection)
+  List<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
         .param("minLegs", 4)
         .param("name", "s%")
@@ -63,23 +63,26 @@ A query with named parameter-style parameters:
         .collect(toList());
 ```
 
+All these examples execute as tests in the `ExamplesTest` class. 
+
 Resource Management
 -------------------
 
-The `ResultSet` is closed automatically when the `Stream` has been consumed.
-If a `Connection` is "closed" after each query, such as might be the case
-when using a good connection pooling library such as [HikariCP][1], it can be
-done like this:
+The above examples assume a good connection pooling library such as [HikariCP][1] is being
+used, as this allows us to create and close a connection on the callers behalf without being
+concerned about the connection management overhead.
+
+The connection can also be specified explicitly such as the following.
 
 ```java
   try (Connection connection = dataSource.getConnection()) {
-    List<String> names = DB.with(connection)
-          .query("SELECT name FROM animals")
+    List<String> results = DB.with(connection)
+          .query("SELECT name FROM animals WHERE legs >= 5")
           .map(resultSet -> resultSet.getString("name"))
           .stream()
           .collect(toList());
-          
-    //...
+
+    // ...
   }
 ```
 
@@ -90,9 +93,6 @@ Checked exceptions do not play well with lambda expressions and other frameworks
 This library takes the position that checked exceptions hinder more than they help
 with this style of programming, and therefore wrap `SQLException` into an
 `UncheckedSQLException`, which can be explicitly caught as required.
-
-Since obtaining a connection from a `DataSource` is currently done via normal JDBC,
-so an `SQLException` here still needs to be handled.
 
 
 [1]: https://github.com/brettwooldridge/HikariCP

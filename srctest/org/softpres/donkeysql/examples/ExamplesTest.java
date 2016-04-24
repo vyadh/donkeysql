@@ -31,56 +31,63 @@ public class ExamplesTest {
 
   @Test
   public void queryWithNoParameters() throws SQLException {
-    try (Connection connection = dataSource.getConnection()) {
-      List<Animal> results = DB.with(connection)
-            .query("SELECT name, legs FROM animals WHERE legs >= 5")
-            .map(resultSet -> new Animal(
-                  resultSet.getString("name"),
-                  resultSet.getInt("legs")
-            ))
-            .stream()
-            .collect(toList());
+    List<Animal> results = DB.with(dataSource)
+          .query("SELECT name, legs FROM animals WHERE legs >= 5")
+          .map(resultSet -> new Animal(
+                resultSet.getString("name"),
+                resultSet.getInt("legs")
+          ))
+          .stream()
+          .collect(toList());
 
-      assertThat(results).containsExactly(
-            new Animal("spider", 8),
-            new Animal("ant", 6),
-            new Animal("beetle", 6)
-      );
-    }
+    assertThat(results).containsExactly(
+          new Animal("spider", 8),
+          new Animal("ant", 6),
+          new Animal("beetle", 6)
+    );
   }
 
   @Test
   public void queryWithPreparedStatementStyleParameters() throws SQLException {
-    try (Connection connection = dataSource.getConnection()) {
-      List<Animal> results = DB.with(connection)
-            .query("SELECT name, legs FROM animals WHERE legs >= ? AND name LIKE ?")
-            .params(5, "s%")
-            .map(resultSet -> new Animal(
-                  resultSet.getString("name"),
-                  resultSet.getInt("legs")
-            ))
-            .stream()
-            .collect(toList());
+    List<Animal> results = DB.with(dataSource)
+          .query("SELECT name, legs FROM animals WHERE legs >= ? AND name LIKE ?")
+          .params(5, "s%")
+          .map(resultSet -> new Animal(
+                resultSet.getString("name"),
+                resultSet.getInt("legs")
+          ))
+          .stream()
+          .collect(toList());
 
-      assertThat(results).containsExactly(new Animal("spider", 8));
-    }
+    assertThat(results).containsExactly(new Animal("spider", 8));
   }
 
   @Test
   public void queryWithNamedParameters() throws SQLException {
+    List<Animal> results = DB.with(dataSource)
+          .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
+          .param("minLegs", 5)
+          .param("name", "s%")
+          .map(resultSet -> new Animal(
+                resultSet.getString("name"),
+                resultSet.getInt("legs")
+          ))
+          .stream()
+          .collect(toList());
+
+    assertThat(results).containsExactly(new Animal("spider", 8));
+  }
+
+  @Test
+  public void queryWithExplicitConnection() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      List<Animal> results = DB.with(connection)
-            .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
-            .param("minLegs", 4)
-            .param("name", "s%")
-            .map(resultSet -> new Animal(
-                  resultSet.getString("name"),
-                  resultSet.getInt("legs")
-            ))
+      List<String> results = DB.with(connection)
+            .query("SELECT name FROM animals WHERE legs >= 5")
+            .map(resultSet -> resultSet.getString("name"))
             .stream()
             .collect(toList());
 
-      assertThat(results).containsExactly(new Animal("spider", 8));
+      assertThat(results).containsExactly("spider", "ant", "beetle");
     }
   }
 
