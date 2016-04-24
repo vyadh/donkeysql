@@ -5,6 +5,7 @@ package org.softpres.donkeysql;
 
 import org.assertj.core.util.Maps;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,29 +20,42 @@ import java.util.Map;
 public class DB {
 
   public static DBConnection with(Connection connection) {
-    return new DBConnection(connection);
+    return new DBConnection(connection, false);
+  }
+
+  public static DBConnection with(DataSource dataSource) {
+    try {
+      Connection connection = dataSource.getConnection();
+      return new DBConnection(connection, true);
+    } catch (SQLException e) {
+      throw new UncheckedSQLException(e);
+    }
   }
 
   public static class DBConnection {
     private final Connection connection;
+    private final boolean autoClose;
 
-    public DBConnection(Connection connection) {
+    DBConnection(Connection connection, boolean autoClose) {
       this.connection = connection;
+      this.autoClose = autoClose;
     }
 
     public DBQuery query(String sql) {
-      return new DBQuery(connection, sql);
+      return new DBQuery(connection, autoClose, sql);
     }
   }
 
   public static class DBQuery {
     private final Connection connection;
+    private final boolean autoClose;
     private final String sql;
     private final Map<String, Object> namedParams;
     private Object[] params;
 
-    public DBQuery(Connection connection, String sql) {
+    DBQuery(Connection connection, boolean autoClose, String sql) {
       this.connection = connection;
+      this.autoClose = autoClose;
       this.sql = sql;
       this.namedParams = Maps.newHashMap();
       this.params = new Object[0];
@@ -66,11 +80,21 @@ public class DB {
         ResultSet resultSet = statement.executeQuery();
 
         return new ResultSetIterator<>(resultSet, mapper)
-              .onClose(statement::close);
+              .onClose(createAutoClosable(statement));
 
       } catch (SQLException e) {
         throw new UncheckedSQLException(e);
       }
+    }
+
+    private AutoCloseable createAutoClosable(PreparedStatement statement) {
+      return () -> {
+        if (autoClose) {
+          try (PreparedStatement s = statement; Connection c = connection) { }
+        } else {
+          statement.close();
+        }
+      };
     }
 
     private void applyParameters(PreparedStatement statement) throws SQLException {
