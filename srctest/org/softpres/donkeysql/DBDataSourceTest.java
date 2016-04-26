@@ -29,7 +29,11 @@ public class DBDataSourceTest {
     DataSource dataSource = mock(DataSource.class);
     when(dataSource.getConnection()).thenThrow(exception);
 
-    Throwable throwable = catchThrowable(() -> DB.with(dataSource));
+    Throwable throwable = catchThrowable(() ->
+      DB.with(dataSource)
+            .query("")
+            .map(rs -> rs)
+    );
 
     assertThat(throwable)
           .isInstanceOf(UncheckedSQLException.class)

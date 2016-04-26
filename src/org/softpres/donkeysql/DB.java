@@ -20,41 +20,36 @@ import java.util.Map;
 public class DB {
 
   public static DBConnection with(Connection connection) {
-    return new DBConnection(connection, false);
+    return new DBConnection(() -> connection, false);
   }
 
   public static DBConnection with(DataSource dataSource) {
-    try {
-      Connection connection = dataSource.getConnection();
-      return new DBConnection(connection, true);
-    } catch (SQLException e) {
-      throw new UncheckedSQLException(e);
-    }
+    return new DBConnection(dataSource::getConnection, true);
   }
 
   public static class DBConnection {
-    private final Connection connection;
+    private final ConnectionFactory connectionFactory;
     private final boolean autoClose;
 
-    DBConnection(Connection connection, boolean autoClose) {
-      this.connection = connection;
+    DBConnection(ConnectionFactory connectionFactory, boolean autoClose) {
+      this.connectionFactory = connectionFactory;
       this.autoClose = autoClose;
     }
 
     public DBQuery query(String sql) {
-      return new DBQuery(connection, autoClose, sql);
+      return new DBQuery(connectionFactory, autoClose, sql);
     }
   }
 
   public static class DBQuery {
-    private final Connection connection;
+    private final ConnectionFactory connectionFactory;
     private final boolean autoClose;
     private final String sql;
     private final Map<String, Object> namedParams;
     private Object[] params;
 
-    DBQuery(Connection connection, boolean autoClose, String sql) {
-      this.connection = connection;
+    DBQuery(ConnectionFactory connectionFactory, boolean autoClose, String sql) {
+      this.connectionFactory = connectionFactory;
       this.autoClose = autoClose;
       this.sql = sql;
       this.namedParams = Maps.newHashMap();
@@ -75,19 +70,20 @@ public class DB {
       try {
 
         String normalisedSQL = StringParameters.normalise(sql);
+        Connection connection = connectionFactory.create();
         PreparedStatement statement = connection.prepareStatement(normalisedSQL);
         applyParameters(statement);
         ResultSet resultSet = statement.executeQuery();
 
         return new ResultSetIterator<>(resultSet, mapper)
-              .onClose(asSQLResource(statement));
+              .onClose(asSQLResource(statement, connection));
 
       } catch (SQLException e) {
         throw new UncheckedSQLException(e);
       }
     }
 
-    private SQLResource asSQLResource(PreparedStatement statement) {
+    private SQLResource asSQLResource(PreparedStatement statement, Connection connection) {
       return () -> {
         if (autoClose) {
           try (PreparedStatement s = statement; Connection c = connection) { }
@@ -137,6 +133,10 @@ public class DB {
       }
       return value;
     }
+  }
+
+  private interface ConnectionFactory {
+    Connection create() throws SQLException;
   }
 
 }
