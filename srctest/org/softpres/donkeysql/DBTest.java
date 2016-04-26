@@ -104,7 +104,8 @@ public class DBTest {
     Throwable error = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1) // Only one
-          .map(resultSet -> resultSet.getInt("id")));
+          .map(resultSet -> resultSet.getInt("id"))
+          .stream());
 
     assertThat(error).hasCauseInstanceOf(SQLException.class);
   }
@@ -114,7 +115,8 @@ public class DBTest {
     Throwable error = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1, 2, 3) // Extra one
-          .map(resultSet -> resultSet.getInt("id")));
+          .map(resultSet -> resultSet.getInt("id"))
+          .stream());
 
     assertThat(error).hasCauseInstanceOf(SQLException.class);
   }

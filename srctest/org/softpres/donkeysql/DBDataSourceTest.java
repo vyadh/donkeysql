@@ -33,6 +33,7 @@ public class DBDataSourceTest {
       DB.with(dataSource)
             .query("")
             .map(rs -> rs)
+            .stream()
     );
 
     assertThat(throwable)

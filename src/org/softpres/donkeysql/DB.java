@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Database DSL.
@@ -36,47 +37,64 @@ public class DB {
       this.autoClose = autoClose;
     }
 
-    public DBQuery query(String sql) {
-      return new DBQuery(connectionFactory, autoClose, sql);
+    public DBQueryBuilder query(String sql) {
+      return new DBQueryBuilder(connectionFactory, autoClose, sql);
     }
   }
 
-  public static class DBQuery {
+  public static class DBQueryBuilder {
     private final ConnectionFactory connectionFactory;
-    private final boolean autoClose;
+    private final boolean closeConnection;
     private final String sql;
     private final Map<String, Object> namedParams;
     private Object[] params;
 
-    DBQuery(ConnectionFactory connectionFactory, boolean autoClose, String sql) {
+    DBQueryBuilder(ConnectionFactory connectionFactory, boolean closeConnection, String sql) {
       this.connectionFactory = connectionFactory;
-      this.autoClose = autoClose;
+      this.closeConnection = closeConnection;
       this.sql = sql;
       this.namedParams = Maps.newHashMap();
       this.params = new Object[0];
     }
 
-    public DBQuery params(Object... params) {
+    public DBQueryBuilder params(Object... params) {
       this.params = params;
       return this;
     }
 
-    public DBQuery param(String name, Object value) {
+    public DBQueryBuilder param(String name, Object value) {
       namedParams.put(name, value);
       return this;
     }
 
-    public <T> ResultSetIterator<T> map(RowMapper<T> mapper) {
+    public <T> DBQuery<T> map(RowMapper<T> mapper) {
+      ParameterisedQuery query = new ParameterisedQuery(sql, params, namedParams);
+      return new DBQuery<>(connectionFactory, closeConnection, mapper, query);
+    }
+  }
+
+  public static class DBQuery<T> {
+    private final ConnectionFactory connectionFactory;
+    private final boolean closeConnection;
+    private final RowMapper<T> mapper;
+    private final ParameterisedQuery query;
+
+    DBQuery(ConnectionFactory connectionFactory, boolean closeConnection, RowMapper<T> mapper, ParameterisedQuery query) {
+      this.connectionFactory = connectionFactory;
+      this.closeConnection = closeConnection;
+      this.mapper = mapper;
+      this.query = query;
+    }
+
+    public Stream<T> stream() {
       try {
 
-        String normalisedSQL = StringParameters.normalise(sql);
         Connection connection = connectionFactory.create();
-        PreparedStatement statement = connection.prepareStatement(normalisedSQL);
-        applyParameters(statement);
+        PreparedStatement statement = query.createStatement(connection);
         ResultSet resultSet = statement.executeQuery();
-
         return new ResultSetIterator<>(resultSet, mapper)
-              .onClose(asSQLResource(statement, connection));
+              .onClose(asSQLResource(statement, connection))
+              .stream();
 
       } catch (SQLException e) {
         throw new UncheckedSQLException(e);
@@ -85,15 +103,34 @@ public class DB {
 
     private SQLResource asSQLResource(PreparedStatement statement, Connection connection) {
       return () -> {
-        if (autoClose) {
+        if (closeConnection) {
           try (PreparedStatement s = statement; Connection c = connection) { }
         } else {
           statement.close();
         }
       };
     }
+  }
 
-    private void applyParameters(PreparedStatement statement) throws SQLException {
+  private static class ParameterisedQuery {
+    private final String sql;
+    private final Object[] params;
+    private final Map<String, Object> namedParams;
+
+    ParameterisedQuery(String sql, Object[] params, Map<String, Object> namedParams) {
+      this.sql = sql;
+      this.params = params;
+      this.namedParams = namedParams;
+    }
+
+    PreparedStatement createStatement(Connection connection) throws SQLException {
+      String normalisedSQL = StringParameters.normalise(sql);
+      PreparedStatement statement = connection.prepareStatement(normalisedSQL);
+      applyParameters(statement);
+      return statement;
+    }
+
+    void applyParameters(PreparedStatement statement) throws SQLException {
       if (params.length > 0 && !namedParams.isEmpty()) {
         throw new UnsupportedOperationException(
               "Unsupported parameter configuration (uses of named and anon parameters)");
