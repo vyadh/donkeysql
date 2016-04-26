@@ -33,7 +33,7 @@ public class DBDataSourceTest {
       DB.with(dataSource)
             .query("")
             .map(rs -> rs)
-            .stream()
+            .execute()
     );
 
     assertThat(throwable)
@@ -51,7 +51,7 @@ public class DBDataSourceTest {
     DB.with(connection)
           .query("SELECT 42")
           .map(rs -> rs.getInt(1))
-          .stream()
+          .execute()
           .collect(toList());
 
     verify(statement).close();
@@ -68,7 +68,7 @@ public class DBDataSourceTest {
     DB.with(dataSource)
           .query("SELECT 42")
           .map(rs -> rs.getInt(1))
-          .stream()
+          .execute()
           .collect(toList());
 
     verify(statement).close();
@@ -86,7 +86,7 @@ public class DBDataSourceTest {
     Throwable throwable = catchThrowable(() -> DB.with(dataSource(connection))
           .query("SELECT 42")
           .map(rs -> rs.getInt(1))
-          .stream()
+          .execute()
           .collect(toList()));
 
     assertThat(throwable)

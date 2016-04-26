@@ -31,7 +31,7 @@ public class DBTest {
     List<Integer> results = DB.with(dataSource)
           .query("SELECT id FROM animals")
           .map(resultSet -> resultSet.getInt("id"))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
@@ -43,7 +43,7 @@ public class DBTest {
           .query("SELECT id FROM animals WHERE id <= ? OR id >= ?")
           .params(2, 9)
           .map(resultSet -> resultSet.getInt("id"))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsExactly(1, 2, 9, 10);
@@ -56,7 +56,7 @@ public class DBTest {
           .param("id", 5)
           .params(1, 5)
           .map(resultSet -> resultSet.getInt("id"))
-          .stream()
+          .execute()
           .collect(toList()));
 
     assertThat(throwable).hasMessage(
@@ -68,7 +68,7 @@ public class DBTest {
     Throwable throwable = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE name = :name")
           .map(resultSet -> resultSet.getString("id"))
-          .stream()
+          .execute()
           .collect(toList()));
 
     assertThat(throwable).hasMessage("Unspecified parameter: name");
@@ -81,7 +81,7 @@ public class DBTest {
           .param("five", 5)
           .param("name", "b%")
           .map(resultSet -> resultSet.getString("name"))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsOnly("beetle");
@@ -93,7 +93,7 @@ public class DBTest {
           .query("SELECT id, name FROM animals WHERE name LIKE ?")
           .params("%or%")
           .map(resultSet -> resultSet.getInt("id") + "=" + resultSet.getString("name"))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsOnly("6=worm", "9=horse");
@@ -105,7 +105,7 @@ public class DBTest {
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1) // Only one
           .map(resultSet -> resultSet.getInt("id"))
-          .stream());
+          .execute());
 
     assertThat(error).hasCauseInstanceOf(SQLException.class);
   }
@@ -116,7 +116,7 @@ public class DBTest {
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1, 2, 3) // Extra one
           .map(resultSet -> resultSet.getInt("id"))
-          .stream());
+          .execute());
 
     assertThat(error).hasCauseInstanceOf(SQLException.class);
   }

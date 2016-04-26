@@ -37,7 +37,7 @@ public class ExamplesTest {
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsExactly(
@@ -56,7 +56,7 @@ public class ExamplesTest {
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsExactly(new Animal("spider", 8));
@@ -72,7 +72,7 @@ public class ExamplesTest {
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .stream()
+          .execute()
           .collect(toList());
 
     assertThat(results).containsExactly(new Animal("spider", 8));
@@ -84,7 +84,7 @@ public class ExamplesTest {
       List<String> results = DB.with(connection)
             .query("SELECT name FROM animals WHERE legs >= 5")
             .map(resultSet -> resultSet.getString("name"))
-            .stream()
+            .execute()
             .collect(toList());
 
       assertThat(results).containsExactly("spider", "ant", "beetle");

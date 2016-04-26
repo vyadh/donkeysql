@@ -86,7 +86,7 @@ public class DB {
       this.query = query;
     }
 
-    public Stream<T> stream() {
+    public Stream<T> execute() {
       try {
 
         Connection connection = connectionFactory.create();

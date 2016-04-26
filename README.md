@@ -30,7 +30,7 @@ A simple query:
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .stream()
+        .execute()
         .collect(toList());
 ```
 
@@ -44,7 +44,7 @@ A query with `PreparedStatement`-style parameters:
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .stream()
+        .execute()
         .collect(toList());
 ```
 
@@ -59,7 +59,7 @@ A query with named parameter-style parameters:
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .stream()
+        .execute()
         .collect(toList());
 ```
 
@@ -79,7 +79,7 @@ The connection can also be specified explicitly such as the following.
     List<String> results = DB.with(connection)
           .query("SELECT name FROM animals WHERE legs >= 5")
           .map(resultSet -> resultSet.getString("name"))
-          .stream()
+          .execute()
           .collect(toList());
 
     // ...
