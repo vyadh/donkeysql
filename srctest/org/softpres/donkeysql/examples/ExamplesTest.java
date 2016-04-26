@@ -12,7 +12,7 @@ import org.softpres.donkeysql.TestDB;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,16 +31,15 @@ public class ExamplesTest {
 
   @Test
   public void queryWithNoParameters() throws SQLException {
-    List<Animal> results = DB.with(dataSource)
+    Stream<Animal> results = DB.with(dataSource)
           .query("SELECT name, legs FROM animals WHERE legs >= 5")
           .map(resultSet -> new Animal(
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .execute()
-          .collect(toList());
+          .execute();
 
-    assertThat(results).containsExactly(
+    assertThat(results.collect(toList())).containsExactly(
           new Animal("spider", 8),
           new Animal("ant", 6),
           new Animal("beetle", 6)
@@ -49,22 +48,21 @@ public class ExamplesTest {
 
   @Test
   public void queryWithPreparedStatementStyleParameters() throws SQLException {
-    List<Animal> results = DB.with(dataSource)
+    Stream<Animal> results = DB.with(dataSource)
           .query("SELECT name, legs FROM animals WHERE legs >= ? AND name LIKE ?")
           .params(5, "s%")
           .map(resultSet -> new Animal(
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .execute()
-          .collect(toList());
+          .execute();
 
-    assertThat(results).containsExactly(new Animal("spider", 8));
+    assertThat(results.collect(toList())).containsExactly(new Animal("spider", 8));
   }
 
   @Test
   public void queryWithNamedParameters() throws SQLException {
-    List<Animal> results = DB.with(dataSource)
+    Stream<Animal> results = DB.with(dataSource)
           .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
           .param("minLegs", 5)
           .param("name", "s%")
@@ -72,22 +70,20 @@ public class ExamplesTest {
                 resultSet.getString("name"),
                 resultSet.getInt("legs")
           ))
-          .execute()
-          .collect(toList());
+          .execute();
 
-    assertThat(results).containsExactly(new Animal("spider", 8));
+    assertThat(results.collect(toList())).containsExactly(new Animal("spider", 8));
   }
 
   @Test
   public void queryWithExplicitConnection() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      List<String> results = DB.with(connection)
+      Stream<String> results = DB.with(connection)
             .query("SELECT name FROM animals WHERE legs >= 5")
             .map(resultSet -> resultSet.getString("name"))
-            .execute()
-            .collect(toList());
+            .execute();
 
-      assertThat(results).containsExactly("spider", "ant", "beetle");
+      assertThat(results.collect(toList())).containsExactly("spider", "ant", "beetle");
     }
   }
 

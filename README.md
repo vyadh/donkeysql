@@ -24,34 +24,32 @@ Examples
 A simple query:
 
 ```java
-  List<Animal> results = DB.with(dataSource)
+  Stream<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs > 4")
         .map(resultSet -> new Animal(
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .execute()
-        .collect(toList());
+        .execute();
 ```
 
 A query with `PreparedStatement`-style parameters:
 
 ```java
-  List<Animal> results = DB.with(dataSource)
+  Stream<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs >= ? AND name LIKE ?")
         .params(5, "s%")
         .map(resultSet -> new Animal(
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .execute()
-        .collect(toList());
+        .execute();
 ```
 
 A query with named parameter-style parameters:
 
 ```java
-  List<Animal> results = DB.with(dataSource)
+  Stream<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
         .param("minLegs", 4)
         .param("name", "s%")
@@ -59,8 +57,7 @@ A query with named parameter-style parameters:
               resultSet.getString("name"),
               resultSet.getInt("legs")
         ))
-        .execute()
-        .collect(toList());
+        .execute();
 ```
 
 All these examples execute as tests in the `ExamplesTest` class. 
@@ -76,11 +73,10 @@ The connection can also be specified explicitly such as the following.
 
 ```java
   try (Connection connection = dataSource.getConnection()) {
-    List<String> results = DB.with(connection)
+    Stream<String> results = DB.with(connection)
           .query("SELECT name FROM animals WHERE legs >= 5")
           .map(resultSet -> resultSet.getString("name"))
-          .execute()
-          .collect(toList());
+          .execute();
 
     // ...
   }
