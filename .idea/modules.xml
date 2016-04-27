@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/donkeysql.iml" filepath="$PROJECT_DIR$/donkeysql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/donkeysql.iml" filepath="$PROJECT_DIR$/.idea/modules/donkeysql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/donkeysql_main.iml" filepath="$PROJECT_DIR$/.idea/modules/donkeysql_main.iml" group="donkeysql" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/donkeysql_test.iml" filepath="$PROJECT_DIR$/.idea/modules/donkeysql_test.iml" group="donkeysql" />
     </modules>
   </component>
 </project>
