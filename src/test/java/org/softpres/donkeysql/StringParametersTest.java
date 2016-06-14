@@ -86,4 +86,24 @@ public class StringParametersTest {
           .isEqualTo("string ? many ? AND (? with ?)");
   }
 
+  @Test
+  public void normaliseShouldNotReplaceParameterLikeValuesInLiteral() {
+    String statement = "SELECT * FROM table WHERE column = 'prefix :something postfix'";
+
+    assertThat(normalise(statement)).isEqualTo(statement);
+  }
+
+  @Test
+  public void normaliseShouldNotReplaceParameterLikeValuesInTimestamp() {
+    String statement = "SELECT * FROM people WHERE birth = '2000-01-01T00:00:00'";
+
+    assertThat(normalise(statement)).isEqualTo(statement);
+  }
+
+  @Test
+  public void normaliseForParametersWithinAnInDeclarationWithCommas() {
+    assertThat(normalise("SELECT * FROM people WHERE favouriteCol in (:color1, :colour2, :colour3)"))
+          .isEqualTo("SELECT * FROM people WHERE favouriteCol in (?, ?, ?)");
+  }
+
 }
