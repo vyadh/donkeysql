@@ -9,6 +9,7 @@ import org.junit.Test;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +28,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithNoParameters() throws SQLException {
+  public void queryWithNoParameters() {
     List<Integer> results = DB.with(dataSource)
           .query("SELECT id FROM animals")
           .map(resultSet -> resultSet.getInt("id"))
@@ -38,7 +39,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithParameters() throws SQLException {
+  public void queryWithParameters() {
     List<Integer> results = DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id <= ? OR id >= ?")
           .params(2, 9)
@@ -50,7 +51,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithTwoParameterStylesIsUnsupported() throws SQLException {
+  public void queryWithTwoParameterStylesIsUnsupported() {
     Throwable throwable = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id < :id")
           .param("id", 5)
@@ -64,7 +65,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithUnspecifiedParameter() throws SQLException {
+  public void queryWithUnspecifiedParameter() {
     Throwable throwable = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE name = :name")
           .map(resultSet -> resultSet.getString("id"))
@@ -75,7 +76,21 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithNamedParameters() throws SQLException {
+  public void queryWithUnusedParameter() {
+    List<Integer> ids = DB.with(dataSource)
+          .query("SELECT id FROM animals WHERE id = :first OR id = :second")
+          .param("first", 1)
+          .param("second", 2)
+          .param("third", 3) // Extra one doesn't stop query working
+          .map(resultSet -> resultSet.getInt("id"))
+          .execute()
+          .collect(toList());
+
+    assertThat(ids).contains(1, 2);
+  }
+
+  @Test
+  public void queryWithNamedParameters() {
     List<String> results = DB.with(dataSource)
           .query("SELECT name FROM animals WHERE id > :five AND name LIKE :name")
           .param("five", 5)
@@ -88,7 +103,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithMapping() throws SQLException {
+  public void queryWithMapping() {
     List<String> results = DB.with(dataSource)
           .query("SELECT id, name FROM animals WHERE name LIKE ?")
           .params("%or%")
@@ -100,7 +115,7 @@ public class DBTest {
   }
 
   @Test
-  public void nonSuppledParameters() throws SQLException {
+  public void nonSuppledParameters() {
     Throwable error = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1) // Only one
@@ -111,7 +126,7 @@ public class DBTest {
   }
 
   @Test
-  public void tooManyParameters() throws SQLException {
+  public void tooManyParameters() {
     Throwable error = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1, 2, 3) // Extra one
