@@ -46,6 +46,15 @@ class StringParameters {
         case '(':
         case ')':
         case ',':
+        case '=':
+        case '>':
+        case '<':
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '%':
+        case '!':
           state.punctuation(c);
           break;
         case ' ':

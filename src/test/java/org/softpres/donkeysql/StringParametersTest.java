@@ -55,9 +55,9 @@ public class StringParametersTest {
   public void parametersWithComplexStatement() {
     assertThat(parameters(
           "SELECT count(1) FROM people WHERE" +
-                " (name LIKE :name-pattern) AND" +
+                " (name LIKE :name_pattern) AND" +
                 " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister))"))
-          .containsExactly("name-pattern", "age", "age", "sister");
+          .containsExactly("name_pattern", "age", "age", "sister");
   }
 
   @Test
@@ -79,7 +79,7 @@ public class StringParametersTest {
           normalise("SELECT * FROM table WHERE column = :something"))
           .isEqualTo("SELECT * FROM table WHERE column = ?");
     assertThat(
-          normalise("SELECT * FROM people WHERE ages < :too-young"))
+          normalise("SELECT * FROM people WHERE ages < :too_young"))
           .isEqualTo("SELECT * FROM people WHERE ages < ?");
     assertThat(
           normalise("string :with many :params AND (:some with :brackets)"))
@@ -98,6 +98,15 @@ public class StringParametersTest {
     String statement = "SELECT * FROM people WHERE birth = '2000-01-01T00:00:00'";
 
     assertThat(normalise(statement)).isEqualTo(statement);
+  }
+
+  @Test
+  public void normaliseShouldSupportOperators() {
+    assertThat(normalise("WHERE name!=:first")).isEqualTo("WHERE name!=?");
+    assertThat(normalise("WHERE name!='Kieron'")).isEqualTo("WHERE name!='Kieron'");
+    assertThat(normalise("WHERE name LIKE 'Kieron %'")).isEqualTo("WHERE name LIKE 'Kieron %'");
+    assertThat(normalise("WHERE age='18'")).isEqualTo("WHERE age='18'");
+    assertThat(normalise("WHERE age>=:adult")).isEqualTo("WHERE age>=?");
   }
 
   @Test
