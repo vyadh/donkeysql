@@ -32,6 +32,7 @@ jacocoTestReport {
         html.enabled = false
     }
 }
+check.dependsOn jacocoTestReport
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
