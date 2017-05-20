@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/vyadh/donkeysql.svg?branch=master)](https://travis-ci.org/vyadh/donkeysql)
+[![codecov](https://codecov.io/gh/vyadh/donkeysql/branch/master/graph/badge.svg)](https://codecov.io/gh/vyadh/donkeysql)
+
 Donkey SQL
 ==========
 
