@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2015, Kieron Wilkinson
  */
-package org.softpres.donkeysql;
+package org.softpres.donkeysql.params;
 
 import java.util.*;
 import java.util.stream.Stream;

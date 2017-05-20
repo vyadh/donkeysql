@@ -3,6 +3,8 @@
  */
 package org.softpres.donkeysql;
 
+import org.softpres.donkeysql.params.ParamQuery;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,30 +45,68 @@ public class DB {
     private final ConnectionFactory connectionFactory;
     private final boolean closeConnection;
     private final String sql;
-    private final Map<String, Object> namedParams;
-    private Object[] params;
 
     DBQueryBuilder(ConnectionFactory connectionFactory, boolean closeConnection, String sql) {
       this.connectionFactory = connectionFactory;
       this.closeConnection = closeConnection;
       this.sql = sql;
-      this.namedParams = new HashMap<>();
-      this.params = new Object[0];
     }
 
-    public DBQueryBuilder params(Object... params) {
+    public IndexedQueryBuilder params(Object... params) {
+      return new IndexedQueryBuilder(this, params);
+    }
+
+    public NamedQueryBuilder param(String name, Object value) {
+      return new NamedQueryBuilder(this).param(name, value);
+    }
+
+    public <T> DBQuery<T> map(RowMapper<T> mapper) {
+      return new DBQuery<>(
+            connectionFactory,
+            closeConnection,
+            mapper,
+            ParamQuery.none(sql));
+    }
+  }
+
+  public static class IndexedQueryBuilder {
+    private final DBQueryBuilder builder;
+    private final Object[] params;
+
+    IndexedQueryBuilder(DBQueryBuilder builder, Object[] params) {
+      this.builder = builder;
       this.params = params;
-      return this;
     }
 
-    public DBQueryBuilder param(String name, Object value) {
-      namedParams.put(name, value);
+    public <T> DBQuery<T> map(RowMapper<T> mapper) {
+      return new DBQuery<>(
+            builder.connectionFactory,
+            builder.closeConnection,
+            mapper,
+            ParamQuery.indexed(builder.sql, params));
+    }
+  }
+
+  public static class NamedQueryBuilder {
+    private final DBQueryBuilder builder;
+    private final Map<String, Object> params;
+
+    NamedQueryBuilder(DBQueryBuilder builder) {
+      this.builder = builder;
+      params = new HashMap<>();
+    }
+
+    public NamedQueryBuilder param(String name, Object value) {
+      params.put(name, value);
       return this;
     }
 
     public <T> DBQuery<T> map(RowMapper<T> mapper) {
-      ParameterisedQuery query = new ParameterisedQuery(sql, params, namedParams);
-      return new DBQuery<>(connectionFactory, closeConnection, mapper, query);
+      return new DBQuery<>(
+            builder.connectionFactory,
+            builder.closeConnection,
+            mapper,
+            ParamQuery.named(builder.sql, params));
     }
   }
 
@@ -74,9 +114,9 @@ public class DB {
     private final ConnectionFactory connectionFactory;
     private final boolean closeConnection;
     private final RowMapper<T> mapper;
-    private final ParameterisedQuery query;
+    private final ParamQuery query;
 
-    DBQuery(ConnectionFactory connectionFactory, boolean closeConnection, RowMapper<T> mapper, ParameterisedQuery query) {
+    DBQuery(ConnectionFactory connectionFactory, boolean closeConnection, RowMapper<T> mapper, ParamQuery query) {
       this.connectionFactory = connectionFactory;
       this.closeConnection = closeConnection;
       this.mapper = mapper;

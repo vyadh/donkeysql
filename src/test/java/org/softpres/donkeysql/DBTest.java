@@ -9,7 +9,6 @@ import org.junit.Test;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,28 +50,13 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithTwoParameterStylesIsUnsupported() {
-    Throwable throwable = catchThrowable(() -> DB.with(dataSource)
-          .query("SELECT id FROM animals WHERE id < :id")
-          .param("id", 5)
-          .params(1, 5)
-          .map(resultSet -> resultSet.getInt("id"))
-          .execute()
-          .collect(toList()));
-
-    assertThat(throwable).hasMessage(
-          "Unsupported parameter configuration (uses of named and anon parameters)");
-  }
-
-  @Test
   public void queryWithUnspecifiedParameter() {
     Throwable throwable = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE name = :name")
           .map(resultSet -> resultSet.getString("id"))
-          .execute()
-          .collect(toList()));
+          .execute());
 
-    assertThat(throwable).hasMessage("Unspecified parameter: name");
+    assertThat(throwable).hasMessageContaining("Syntax error in SQL statement");
   }
 
   @Test
@@ -115,7 +99,7 @@ public class DBTest {
   }
 
   @Test
-  public void nonSuppledParameters() {
+  public void nonSuppliedParameters() {
     Throwable error = catchThrowable(() -> DB.with(dataSource)
           .query("SELECT id FROM animals WHERE id = ? OR id = ?")
           .params(1) // Only one

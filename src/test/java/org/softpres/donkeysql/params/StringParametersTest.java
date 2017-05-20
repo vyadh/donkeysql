@@ -2,13 +2,13 @@
  * Copyright (c) 2015, Kieron Wilkinson
  */
 
-package org.softpres.donkeysql;
+package org.softpres.donkeysql.params;
 
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.softpres.donkeysql.StringParameters.normalise;
-import static org.softpres.donkeysql.StringParameters.parameters;
+import static org.softpres.donkeysql.params.StringParameters.normalise;
+import static org.softpres.donkeysql.params.StringParameters.parameters;
 
 /**
  * Unit tests for {@link StringParameters}.
