@@ -3,6 +3,7 @@
  */
 
 apply plugin: 'java'
+apply plugin: 'jacoco'
 
 version = '1.0.1'
 
@@ -23,6 +24,13 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: 'org.assertj', name: 'assertj-core', version: '3.2.+'
     testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.+'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
 }
 
 task sourcesJar(type: Jar) {
