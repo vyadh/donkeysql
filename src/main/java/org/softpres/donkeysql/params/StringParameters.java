@@ -21,7 +21,7 @@ class StringParameters {
    */
   static List<String> parameters(String statement) {
     return tokenise(statement).stream()
-          .flatMap(token -> token instanceof Param ? Stream.of(token.text) : Stream.empty())
+          .flatMap(token -> token instanceof NamedParam ? Stream.of(token.text) : Stream.empty())
           .collect(toList());
   }
 
@@ -30,12 +30,12 @@ class StringParameters {
    */
   static String normalise(String statement) {
     return tokenise(statement).stream()
-          .map(token -> token instanceof Param ? "?" : token.text)
+          .map(token -> token instanceof NamedParam ? "?" : token.text)
           .collect(joining());
   }
 
-  
-  private static List<Token> tokenise(String statement) {
+
+  static List<Token> tokenise(String statement) {
     State state = new State();
 
     for (char c : statement.toCharArray()) {
@@ -61,8 +61,11 @@ class StringParameters {
         case '\t':
           state.whitespace();
           break;
+        case '?':
+          state.questionMark();
+          break;
         case ':':
-          state.startParam();
+          state.startNamedParam();
           break;
         default:
           state.continueWord(c);
@@ -77,10 +80,11 @@ class StringParameters {
   private static class State {
     private static final Quote QUOTE = new Quote();
     private static final Space SPACE = new Space();
+    private static final IndexedParam INDEXED_PARAM = new IndexedParam();
 
     StringBuilder buffer = new StringBuilder();
     boolean quoting = false;
-    boolean param = false;
+    boolean namedParam = false;
     List<Token> tokens = new ArrayList<>();
 
     private void quote() {
@@ -101,11 +105,19 @@ class StringParameters {
       tokens.add(SPACE);
     }
 
-    private void startParam() {
-      if (!quoting) {
-        param = true;
+    private void questionMark() {
+      if (quoting) {
+        buffer.append("?"); // Push back
       } else {
+        tokens.add(INDEXED_PARAM);
+      }
+    }
+
+    private void startNamedParam() {
+      if (quoting) {
         buffer.append(":"); // Push back
+      } else {
+        namedParam = true;
       }
     }
 
@@ -113,13 +125,13 @@ class StringParameters {
       if (buffer.length() != 0) {
         String word = buffer.toString();
         buffer.setLength(0);
-        if (param) {
-          tokens.add(new Param(word));
+        if (namedParam) {
+          tokens.add(new NamedParam(word));
         } else {
           tokens.add(quoting ? new QuotedWord(word) : new Word(word));
         }
       }
-      param = false;
+      namedParam = false;
     }
 
     private void continueWord(char c) {
@@ -127,8 +139,8 @@ class StringParameters {
     }
   }
   
-  private static abstract class Token {
-    private String text;
+  static abstract class Token {
+    String text;
 
     Token(String text) {
       this.text = text;
@@ -170,10 +182,15 @@ class StringParameters {
       super(text);
     }
   }
-  private static class Param extends Token {
-    Param(String text) {
+  static class IndexedParam extends Token {
+    IndexedParam() {
+      super("?");
+    }
+  }
+  private static class NamedParam extends Token {
+    NamedParam(String text) {
       super(text);
     }
   }
-  
+
 }

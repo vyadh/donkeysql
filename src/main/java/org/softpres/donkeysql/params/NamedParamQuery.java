@@ -46,4 +46,20 @@ class NamedParamQuery implements ParamQuery {
     return value;
   }
 
+  @Override
+  public String toString() {
+    return params.entrySet().stream().reduce(
+          sql,
+          this::replaceParam,
+          (a, b) -> { throw new IllegalStateException(); } // Never hit, non-parallel
+    );
+  }
+
+  private String replaceParam(String statement, Map.Entry<String, Object> entry) {
+    return statement.replace(
+          ':' + entry.getKey(),
+          Humanise.paramValue(value(entry.getKey()))
+    );
+  }
+
 }

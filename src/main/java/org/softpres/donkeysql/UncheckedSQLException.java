@@ -12,6 +12,10 @@ import java.sql.SQLException;
  */
 public class UncheckedSQLException extends RuntimeException {
 
+  public UncheckedSQLException(String message) {
+    super(message);
+  }
+
   public UncheckedSQLException(SQLException e) {
     super(e.getMessage(), e);
   }

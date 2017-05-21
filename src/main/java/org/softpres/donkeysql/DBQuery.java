@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -26,6 +27,15 @@ public class DBQuery<T> {
     this.closeConnection = closeConnection;
     this.mapper = mapper;
     this.query = query;
+  }
+
+  /**
+   * Fluent mechanism for peeking at the resulting (logical) SQL statement,
+   * where any parameters are replaced with their respective values.
+   */
+  public DBQuery<T> peek(Consumer<String> sql) {
+    sql.accept(query.toString());
+    return this;
   }
 
   public Stream<T> execute() {

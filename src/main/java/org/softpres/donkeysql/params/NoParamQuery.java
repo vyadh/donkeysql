@@ -6,7 +6,6 @@ package org.softpres.donkeysql.params;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * Query where no parameters have been supplied.
@@ -22,6 +21,11 @@ class NoParamQuery implements ParamQuery {
   @Override
   public PreparedStatement createStatement(Connection connection) throws SQLException {
     return connection.prepareStatement(sql);
+  }
+
+  @Override
+  public String toString() {
+    return sql;
   }
 
 }

@@ -7,8 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,7 +106,9 @@ public class DBTest {
           .map(resultSet -> resultSet.getInt("id"))
           .execute());
 
-    assertThat(error).hasCauseInstanceOf(SQLException.class);
+    assertThat(error)
+          .isInstanceOf(UncheckedSQLException.class)
+          .hasMessageStartingWith("Parameters supplied do not correspond to SQL statement");
   }
 
   @Test
@@ -117,7 +119,20 @@ public class DBTest {
           .map(resultSet -> resultSet.getInt("id"))
           .execute());
 
-    assertThat(error).hasCauseInstanceOf(SQLException.class);
+    assertThat(error)
+          .isInstanceOf(UncheckedSQLException.class)
+          .hasMessageStartingWith("Parameters supplied do not correspond to SQL statement");
+  }
+
+  @Test
+  public void parameterMismatchCheckPassesAsOnlyCountsNonQuoted() {
+    Stream<String> names = DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE name = ? OR name LIKE '?%'")
+          .params("cat")
+          .map(resultSet -> resultSet.getString("name"))
+          .execute();
+
+    assertThat(names).containsOnly("cat");
   }
 
 }
