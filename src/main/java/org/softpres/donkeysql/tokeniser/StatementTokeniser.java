@@ -133,8 +133,8 @@ public class StatementTokeniser {
       super("'");
     }
   }
-  private static class Punc extends Token {
-    Punc(char c) {
+  public static class Punc extends Token {
+    public Punc(char c) {
       super(String.valueOf(c));
     }
   }
@@ -159,7 +159,7 @@ public class StatementTokeniser {
     }
   }
   public static class IndexedParam extends Token {
-    IndexedParam() {
+    public IndexedParam() {
       super("?");
     }
   }

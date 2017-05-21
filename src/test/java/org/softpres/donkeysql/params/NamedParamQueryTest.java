@@ -6,8 +6,13 @@ package org.softpres.donkeysql.params;
 
 import org.junit.Test;
 
+import java.util.*;
+import java.util.stream.Stream;
+
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.softpres.donkeysql.params.NamedParamQuery.normalise;
+import static org.softpres.donkeysql.params.NamedParamQuery.parameterValues;
 import static org.softpres.donkeysql.params.NamedParamQuery.parameters;
 
 /**
@@ -58,6 +63,27 @@ public class NamedParamQueryTest {
                 " (name LIKE :name_pattern) AND" +
                 " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister))"))
           .containsExactly("name_pattern", "age", "age", "sister");
+  }
+
+  @Test
+  public void parameterValuesWhenMissing() {
+    assertThat(parameterValues("SELECT count(1) FROM people WHERE age >= :adult", params()))
+          .containsNull();
+  }
+
+  @Test
+  public void parameterValuesWhenNumericStringOrIterable() {
+    Stream<Object> values = parameterValues(
+          "SELECT count(1) " +
+                "FROM people " +
+                "WHERE age >= :adult AND name LIKE :name AND county IN (:search)",
+          params(
+                "adult", 18,
+                "name", "Bob%",
+                "search", Arrays.asList("Kent", "Surrey")
+          ));
+
+    assertThat(values).containsExactly(18, "Bob%", "Kent", "Surrey");
   }
 
   @Test
@@ -113,6 +139,50 @@ public class NamedParamQueryTest {
   public void normaliseForParametersWithinAnInDeclarationWithCommas() {
     assertThat(normalise("SELECT * FROM people WHERE favouriteCol in (:color1, :colour2, :colour3)"))
           .isEqualTo("SELECT * FROM people WHERE favouriteCol in (?, ?, ?)");
+  }
+
+  @Test
+  public void normaliseWithZeroIterableItems() {
+    assertThat(normalise("WHERE item IN (:items)", params("items", items(1))))
+          .isEqualTo("WHERE item IN (?)");
+  }
+
+  @Test
+  public void normaliseWithSingleIterableItem() {
+    assertThat(normalise("WHERE item IN (:items)", params("items", items())))
+          .isEqualTo("WHERE item IN ()");
+  }
+
+  @Test
+  public void normaliseWithMultipleIterableItem() {
+    assertThat(normalise("WHERE item IN (:items)", params("items", items(1, "2", 3))))
+          .isEqualTo("WHERE item IN (?,?,?)");
+  }
+
+
+  private String normalise(String sql) {
+    return new NamedParamQuery(
+          sql,
+          // Make params available, just used to detect iterable values
+          NamedParamQuery.parameters(sql)
+                .collect(toMap(identity(), identity()))
+    ).normalise();
+  }
+
+  private String normalise(String sql, Map<String, Object> params) {
+    return new NamedParamQuery(sql, params).normalise();
+  }
+
+  private Map<String, Object> params(Object... params) {
+    Map<String, Object> result = new HashMap<>();
+    for (int i = 0; i < params.length; i += 2) {
+      result.put((String)params[i], params[i+1]);
+    }
+    return result;
+  }
+
+  private List<Object> items(Object... items) {
+    return Arrays.asList(items);
   }
 
 }

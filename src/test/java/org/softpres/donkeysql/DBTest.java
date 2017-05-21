@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.sql.DataSource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -87,7 +88,7 @@ public class DBTest {
   }
 
   @Test
-  public void queryWithMapping() {
+  public void queryWithConcatMapping() {
     List<String> results = DB.with(dataSource)
           .query("SELECT id, name FROM animals WHERE name LIKE ?")
           .params("%or%")
@@ -133,6 +134,18 @@ public class DBTest {
           .execute();
 
     assertThat(names).containsOnly("cat");
+  }
+
+  @Test
+  public void queryWithIterableNamedParameters() {
+    Stream<String> names = DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE legs IN (:legs) OR name IN (:names)")
+          .param("legs", Arrays.asList(6, 8))
+          .param("names", Arrays.asList("dog", "cat"))
+          .map(resultSet -> resultSet.getString("name"))
+          .execute();
+
+    assertThat(names).containsOnly("ant", "beetle", "spider", "dog", "cat");
   }
 
 }

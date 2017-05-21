@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.sql.DataSource;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +73,19 @@ public class DBPeekTest {
 
     assertThat(capture.sql)
           .isEqualTo("SELECT name FROM animals WHERE legs > 5 AND name LIKE 'b%'");
+  }
+
+  @Test
+  public void queryWithIterableNamedParameters() {
+    DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE legs IN (:legs) OR name IN (:names)")
+          .param("legs", Arrays.asList(6, 8))
+          .param("names", Arrays.asList("dog", "cat"))
+          .map(resultSet -> resultSet.getString("name"))
+          .peek(capture::set);
+
+    assertThat(capture.sql)
+          .isEqualTo("SELECT name FROM animals WHERE legs IN (6,8) OR name IN ('dog','cat')");
   }
 
   private static class Capture {

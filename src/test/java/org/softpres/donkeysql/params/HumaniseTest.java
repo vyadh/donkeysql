@@ -6,8 +6,10 @@ package org.softpres.donkeysql.params;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.softpres.donkeysql.params.Humanise.paramValue;
 
 /**
  * Unit tests for {@link Humanise}.
@@ -16,19 +18,25 @@ public class HumaniseTest {
 
   @Test
   public void humaniseWithNullParam() {
-    assertThat(Humanise.paramValue(null)).isEqualTo("NULL");
+    assertThat(paramValue(null)).isEqualTo("NULL");
   }
 
   @Test
   public void humaniseWithNumericParam() {
-    assertThat(Humanise.paramValue(5)).isEqualTo("5");
-    assertThat(Humanise.paramValue(5.0)).isEqualTo("5.0");
-    assertThat(Humanise.paramValue(new BigDecimal("5.5"))).isEqualTo("5.5");
+    assertThat(paramValue(5)).isEqualTo("5");
+    assertThat(paramValue(5.0)).isEqualTo("5.0");
+    assertThat(paramValue(new BigDecimal("5.5"))).isEqualTo("5.5");
   }
 
   @Test
   public void humaniseWithStringParam() {
-    assertThat(Humanise.paramValue("value")).isEqualTo("'value'");
+    assertThat(paramValue("value")).isEqualTo("'value'");
+  }
+
+  @Test
+  public void humaniseWithIterableParam() {
+    assertThat(paramValue(Arrays.asList(1, 2, 3, "value")))
+          .isEqualTo("1,2,3,'value'");
   }
 
   @Test
@@ -40,7 +48,7 @@ public class HumaniseTest {
       }
     }
 
-    assertThat(Humanise.paramValue(new Value())).isEqualTo("'val'");
+    assertThat(paramValue(new Value())).isEqualTo("'val'");
   }
 
 }
