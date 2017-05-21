@@ -1,41 +1,17 @@
 /*
- * Copyright (c) 2015, Kieron Wilkinson
+ * Copyright (c) 2017, Kieron Wilkinson
  */
-package org.softpres.donkeysql.params;
+package org.softpres.donkeysql.tokeniser;
 
 import java.util.*;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Determines positions of parameters within an SQL string, and allows
  * their replacement to translate to a standard JDBC string.
  */
-class StringParameters {
+public class StatementTokeniser {
 
-  /**
-   * Returns the parameter names specified in the statement at the appropriate positions
-   * in the list, which allows supporting duplicate names in the statement.
-   */
-  static List<String> parameters(String statement) {
-    return tokenise(statement).stream()
-          .flatMap(token -> token instanceof NamedParam ? Stream.of(token.text) : Stream.empty())
-          .collect(toList());
-  }
-
-  /**
-   * Replace all the parameters in an SQL statement with the standard question marks.
-   */
-  static String normalise(String statement) {
-    return tokenise(statement).stream()
-          .map(token -> token instanceof NamedParam ? "?" : token.text)
-          .collect(joining());
-  }
-
-
-  static List<Token> tokenise(String statement) {
+  public static List<Token> tokenise(String statement) {
     State state = new State();
 
     for (char c : statement.toCharArray()) {
@@ -139,8 +115,8 @@ class StringParameters {
     }
   }
   
-  static abstract class Token {
-    String text;
+  public static abstract class Token {
+    public final String text;
 
     Token(String text) {
       this.text = text;
@@ -182,12 +158,12 @@ class StringParameters {
       super(text);
     }
   }
-  static class IndexedParam extends Token {
+  public static class IndexedParam extends Token {
     IndexedParam() {
       super("?");
     }
   }
-  private static class NamedParam extends Token {
+  public static class NamedParam extends Token {
     NamedParam(String text) {
       super(text);
     }

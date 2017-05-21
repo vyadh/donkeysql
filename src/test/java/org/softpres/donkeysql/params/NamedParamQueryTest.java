@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Kieron Wilkinson
+ * Copyright (c) 2017, Kieron Wilkinson
  */
 
 package org.softpres.donkeysql.params;
@@ -7,13 +7,13 @@ package org.softpres.donkeysql.params;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.softpres.donkeysql.params.StringParameters.normalise;
-import static org.softpres.donkeysql.params.StringParameters.parameters;
+import static org.softpres.donkeysql.params.NamedParamQuery.normalise;
+import static org.softpres.donkeysql.params.NamedParamQuery.parameters;
 
 /**
- * Unit tests for {@link StringParameters}.
+ * Unit tests for {@link NamedParamQuery}.
  */
-public class StringParametersTest {
+public class NamedParamQueryTest {
 
   @Test
   public void parametersWithEmptyString() {

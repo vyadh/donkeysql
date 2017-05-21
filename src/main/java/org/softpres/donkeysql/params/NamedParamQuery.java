@@ -3,11 +3,17 @@
  */
 package org.softpres.donkeysql.params;
 
+import org.softpres.donkeysql.tokeniser.StatementTokeniser;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Associates a "named" parameterised SQL statement with the values to populate it.
@@ -24,18 +30,38 @@ class NamedParamQuery implements ParamQuery {
 
   @Override
   public PreparedStatement createStatement(Connection connection) throws SQLException {
-    String normalisedSQL = StringParameters.normalise(sql);
+    String normalisedSQL = normalise(sql);
     PreparedStatement statement = connection.prepareStatement(normalisedSQL);
     applyParameters(statement);
     return statement;
   }
 
+  /**
+   * Replace all the named parameters in an SQL statement with the standard question marks.
+   */
+  static String normalise(String statement) {
+    return StatementTokeniser.tokenise(statement).stream()
+          .map(token -> token instanceof StatementTokeniser.NamedParam ? "?" : token.text)
+          .collect(joining());
+  }
+
   private void applyParameters(PreparedStatement statement) throws SQLException {
-    List<String> names = StringParameters.parameters(sql);
+    List<String> names = parameters(sql);
     for (int i = 0; i < names.size(); i++) {
       String name = names.get(i);
       statement.setObject(i + 1, value(name));
     }
+  }
+
+  /**
+   * Returns the parameter names specified in the statement at the appropriate positions
+   * in the list, which allows supporting duplicate names in the statement.
+   */
+  static List<String> parameters(String statement) {
+    return StatementTokeniser.tokenise(statement).stream()
+          .flatMap(token -> token instanceof StatementTokeniser.NamedParam ?
+                Stream.of(token.text) : Stream.empty())
+          .collect(toList());
   }
 
   private Object value(String name) {

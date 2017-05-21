@@ -3,6 +3,8 @@
  */
 package org.softpres.donkeysql.params;
 
+import org.softpres.donkeysql.tokeniser.StatementTokeniser;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -48,8 +50,8 @@ class IndexedParamQuery implements ParamQuery {
    * '?' characters existing within quoted values.
    */
   static long count(String statement) {
-    return StringParameters.tokenise(statement).stream()
-          .filter(token -> token instanceof StringParameters.IndexedParam)
+    return StatementTokeniser.tokenise(statement).stream()
+          .filter(token -> token instanceof StatementTokeniser.IndexedParam)
           .count();
   }
 
@@ -71,8 +73,8 @@ class IndexedParamQuery implements ParamQuery {
 
     ParamIterator paramIterator = new ParamIterator(params);
 
-    return StringParameters.tokenise(statement).stream()
-          .map(token -> token instanceof StringParameters.IndexedParam ?
+    return StatementTokeniser.tokenise(statement).stream()
+          .map(token -> token instanceof StatementTokeniser.IndexedParam ?
                 Humanise.paramValue(paramIterator.next()) : token.text)
           .collect(joining());
   }
