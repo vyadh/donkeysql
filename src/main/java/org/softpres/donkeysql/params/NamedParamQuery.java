@@ -14,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -23,8 +24,6 @@ import static java.util.stream.Collectors.toList;
  * Associates a "named" parameterised SQL statement with the values to populate it.
  */
 class NamedParamQuery implements ParamQuery {
-
-  private static final IndexedParam INDEXED_PARAM = new IndexedParam();
 
   private final String sql;
   private final Map<String, Object> params;
@@ -46,27 +45,32 @@ class NamedParamQuery implements ParamQuery {
    * Replace all the named parameters in an SQL statement with the standard question marks.
    */
   String normalise() {
-    return StatementTokeniser.tokenise(sql).stream()
-          .flatMap(this::expand)
-          .map(token -> token instanceof NamedParam ? INDEXED_PARAM : token)
+    return normalisedTokens(sql, params::get)
           .map(token -> token.text)
           .collect(joining());
   }
 
+  private static Stream<Token> normalisedTokens(String sql, Function<String, Object> lookupValue) {
+    return StatementTokeniser.tokenise(sql).stream()
+          .flatMap((Token token) -> expand(token, lookupValue));
+  }
+
   /** Repeat parameters when iterable value exists.  */
-  private Stream<Token> expand(Token token) {
+  private static Stream<Token> expand(Token token, Function<String, Object> lookupValue) {
     if (token instanceof NamedParam) {
-      Object value = value(token.text);
+      Object value = lookupValue.apply(token.text);
       if (value instanceof Iterable<?>) {
-        return iterableAsParams(Streams.from((Iterable<?>)value));
+        return expandedValues(Streams.from((Iterable<?>)value));
+      } else {
+        return Stream.of(new ValueParam(value));
       }
     }
     return Stream.of(token);
   }
 
-  private Stream<Token> iterableAsParams(Stream<?> iterable) {
+  private static Stream<Token> expandedValues(Stream<?> iterable) {
     return Streams.intersperse(
-          iterable.map(any -> INDEXED_PARAM),
+          iterable.map(ValueParam::new),
           new Punc(',')
     );
   }
@@ -80,45 +84,31 @@ class NamedParamQuery implements ParamQuery {
   }
 
   static Stream<Object> parameterValues(String statement, Map<String, Object> values) {
-    return parameters(statement)
-          .map(values::get)
-          .flatMap(value -> value instanceof Iterable<?> ?
-                Streams.from((Iterable<?>) value) :
-                Stream.of(value));
-  }
-
-  /**
-   * Returns the parameter names specified in the statement at the appropriate positions
-   * in the list, which allows supporting duplicate names in the statement.
-   */
-  static Stream<String> parameters(String statement) {
-    return StatementTokeniser.tokenise(statement).stream()
-          .flatMap(token -> token instanceof NamedParam ?
-                Stream.of(token.text) : Stream.empty());
-  }
-
-  private Object value(String name) {
-    Object value = params.get(name);
-    if (value == null) {
-      throw new IllegalStateException("Unspecified parameter: " + name);
-    }
-    return value;
+    return normalisedTokens(statement, values::get)
+          .filter(token -> token instanceof ValueParam)
+          .map(token -> ((ValueParam)token).value);
   }
 
   @Override
   public String toString() {
-    return params.entrySet().stream().reduce(
-          sql,
-          this::replaceParam,
-          (a, b) -> { throw new IllegalStateException(); } // Never hit, non-parallel
-    );
+    return normalisedTokens(sql, params::get)
+          .map(this::humanise)
+          .collect(joining());
   }
 
-  private String replaceParam(String statement, Map.Entry<String, Object> entry) {
-    return statement.replace(
-          ':' + entry.getKey(),
-          Humanise.paramValue(value(entry.getKey()))
-    );
+  private String humanise(Token token) {
+    return token instanceof ValueParam ?
+          Humanise.paramValue(((ValueParam)token).value) :
+          token.text;
+  }
+
+  /** Represents a parameter with associated value. */
+  static class ValueParam extends IndexedParam {
+    private final Object value;
+
+    ValueParam(Object value) {
+      this.value = value;
+    }
   }
 
 }

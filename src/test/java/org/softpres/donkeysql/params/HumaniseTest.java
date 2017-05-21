@@ -34,12 +34,6 @@ public class HumaniseTest {
   }
 
   @Test
-  public void humaniseWithIterableParam() {
-    assertThat(paramValue(Arrays.asList(1, 2, 3, "value")))
-          .isEqualTo("1,2,3,'value'");
-  }
-
-  @Test
   public void humaniseWithObjectParam() {
     class Value {
       @Override
