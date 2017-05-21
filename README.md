@@ -67,7 +67,7 @@ A query with auto-expanding parameters when an `Iterable` supplied:
 
 ```java
   Stream<Animal> results = DB.with(dataSource)
-        .query("SELECT name, legs FROM animals WHERE legs in (:specificLegs)")
+        .query("SELECT name, legs FROM animals WHERE legs IN (:specificLegs)")
         .param("specificLegs", Arrays.asList(0, 8))
         .map(resultSet -> new Animal(
               resultSet.getString("name"),
