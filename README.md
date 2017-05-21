@@ -7,10 +7,10 @@ Donkey SQL
 A tiny library that allows SQL queries to be performed through the Java 8 `Stream`
 interface with lambda expressions.
 
-Donkey SQL is not an ORM.  
-It does not attempt to abstract away from SQL.  
-It greatly simplifies use of plain JBDC.  
-It is less than 500 lines of code (not including tests).  
+Donkey SQL:
+* is not an ORM.  
+* embraces the power of SQL rather than abstracting away from it.  
+* greatly simplifies use of JBDC by providing a fluent interface.  
 
 The core idea is to interface with a `ResultSet` through a `Stream` to allow
 efficient data extraction and transformation from the underlying `ResultSet`
@@ -49,13 +49,26 @@ A query with `PreparedStatement`-style parameters:
         .execute();
 ```
 
-A query with named parameter-style parameters:
+A query with named parameter-style parameters (recommended):
 
 ```java
   Stream<Animal> results = DB.with(dataSource)
         .query("SELECT name, legs FROM animals WHERE legs >= :minLegs AND name LIKE :name")
         .param("minLegs", 4)
         .param("name", "s%")
+        .map(resultSet -> new Animal(
+              resultSet.getString("name"),
+              resultSet.getInt("legs")
+        ))
+        .execute();
+```
+
+A query with auto-expanding parameters when an `Iterable` supplied:
+
+```java
+  Stream<Animal> results = DB.with(dataSource)
+        .query("SELECT name, legs FROM animals WHERE legs in (:specificLegs)")
+        .param("specificLegs", Arrays.asList(0, 8))
         .map(resultSet -> new Animal(
               resultSet.getString("name"),
               resultSet.getInt("legs")
@@ -85,12 +98,15 @@ The connection can also be specified explicitly such as the following.
   }
 ```
 
+This mechanism should also be used if not consuming the whole `ResultSet` in order to
+close the `Connection` appropriately.
+
 Exceptions
 ----------
 
-Checked exceptions do not play well with lambda expressions and other frameworks.
-This library takes the position that checked exceptions hinder more than they help
-with this style of programming, and therefore wrap `SQLException` into an
+Checked exceptions don't tend to play well with lambda expressions and other frameworks.
+This library takes the position that checked exceptions hinder more than they help with
+this style of programming, and therefore wrap `SQLException` into an
 `UncheckedSQLException`, which can be explicitly caught as required.
 
 

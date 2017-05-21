@@ -12,6 +12,7 @@ import org.softpres.donkeysql.TestDB;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -39,7 +40,7 @@ public class ExamplesTest {
           ))
           .execute();
 
-    assertThat(results.collect(toList())).containsExactly(
+    assertThat(results).containsExactly(
           new Animal("spider", 8),
           new Animal("ant", 6),
           new Animal("beetle", 6)
@@ -57,7 +58,7 @@ public class ExamplesTest {
           ))
           .execute();
 
-    assertThat(results.collect(toList())).containsExactly(new Animal("spider", 8));
+    assertThat(results).containsExactly(new Animal("spider", 8));
   }
 
   @Test
@@ -72,7 +73,24 @@ public class ExamplesTest {
           ))
           .execute();
 
-    assertThat(results.collect(toList())).containsExactly(new Animal("spider", 8));
+    assertThat(results).containsExactly(new Animal("spider", 8));
+  }
+
+  @Test
+  public void queryWithExpandedNamedParameters() throws SQLException {
+    Stream<Animal> results = DB.with(dataSource)
+          .query("SELECT name, legs FROM animals WHERE legs in (:specificLegs)")
+          .param("specificLegs", Arrays.asList(0, 8))
+          .map(resultSet -> new Animal(
+                resultSet.getString("name"),
+                resultSet.getInt("legs")
+          ))
+          .execute();
+
+    assertThat(results).containsOnly(
+          new Animal("fish", 0),
+          new Animal("worm", 0),
+          new Animal("spider", 8));
   }
 
   @Test
@@ -83,7 +101,7 @@ public class ExamplesTest {
             .map(resultSet -> resultSet.getString("name"))
             .execute();
 
-      assertThat(results.collect(toList())).containsExactly("spider", "ant", "beetle");
+      assertThat(results).containsExactly("spider", "ant", "beetle");
     }
   }
 
