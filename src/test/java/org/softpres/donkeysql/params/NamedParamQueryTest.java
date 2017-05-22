@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
@@ -111,8 +110,42 @@ public class NamedParamQueryTest {
 
   @Test
   public void normaliseWithMultipleIterableItem() {
-    assertThat(normalise("WHERE item IN (:items)", params("items", items(1, "2", 3))))
-          .isEqualTo("WHERE item IN (?,?,?)");
+    assertThat(normalise("WHERE item IN (:items)", params("items", items(1, "2", 3, "4"))))
+          .isEqualTo("WHERE item IN (?,?,?,?)");
+  }
+
+  @Test
+  public void extendParamsToSizePowerOfTwoPlaceHolders() {
+    String sql = "WHERE n IN (:ns)";
+    assertThat(normalise(sql, params("ns", items())))
+          .isEqualTo("WHERE n IN ()");
+    assertThat(normalise(sql, params("ns", items(1))))
+          .isEqualTo("WHERE n IN (?)");
+    assertThat(normalise(sql, params("ns", items(1, 2))))
+          .isEqualTo("WHERE n IN (?,?)");
+    assertThat(normalise(sql, params("ns", items(1, 2, 3))))
+          .isEqualTo("WHERE n IN (?,?,?,?)");
+    assertThat(normalise(sql, params("ns", items(1, 2, 3, 4))))
+          .isEqualTo("WHERE n IN (?,?,?,?)");
+    assertThat(normalise(sql, params("ns", items(1, 2, 3, 4, 5))))
+          .isEqualTo("WHERE n IN (?,?,?,?,?,?,?,?)");
+  }
+
+  @Test
+  public void extendParamsToSizePowerOfTwoPlaceValues() {
+    String sql = "WHERE n IN (:ns)";
+    assertThat(parameterValues(sql, params("ns", items())))
+          .isEmpty();
+    assertThat(parameterValues(sql, params("ns", items(1))))
+          .containsExactly(1);
+    assertThat(parameterValues(sql, params("ns", items(1, 2))))
+          .containsExactly(1, 2);
+    assertThat(parameterValues(sql, params("ns", items(1, 2, 3))))
+          .containsExactly(1, 2, 3, 3);
+    assertThat(parameterValues(sql, params("ns", items(1, 2, 3, 4))))
+          .containsExactly(1, 2, 3, 4);
+    assertThat(parameterValues(sql, params("ns", items(1, 2, 3, 4, 5))))
+          .containsExactly(1, 2, 3, 4, 5, 5, 5, 5);
   }
 
 

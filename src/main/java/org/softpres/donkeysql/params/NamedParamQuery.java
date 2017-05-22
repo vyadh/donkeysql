@@ -60,7 +60,7 @@ class NamedParamQuery implements ParamQuery {
     if (token instanceof NamedParam) {
       Object value = lookupValue.apply(token.text);
       if (value instanceof Iterable<?>) {
-        return expandedValues(Streams.from((Iterable<?>)value));
+        return expandedValues((Iterable<?>)value);
       } else {
         return Stream.of(new ValueParam(value));
       }
@@ -68,9 +68,18 @@ class NamedParamQuery implements ParamQuery {
     return Stream.of(token);
   }
 
-  private static Stream<Token> expandedValues(Stream<?> iterable) {
+  /**
+   * Expand iterable values to a power of 2 (by repeating the last element) to
+   * give SQL optimisers a better chance of caching the {@link PreparedStatement}
+   * on IN operators (assumes only used for IN operator currently, need to improve
+   * Tokeniser to indicate last operator at some point - e.g. for use in VALUES).
+   */
+  private static Stream<Token> expandedValues(Iterable<?> iterable) {
+    List<?> list = Streams.list(iterable);
+    Stream<?> padded = Streams.padWithLastTo(list, PowerOfTwo.nextOrZero(list.size()));
+
     return Streams.intersperse(
-          iterable.map(ValueParam::new),
+          padded.map(ValueParam::new),
           new Punc(',')
     );
   }

@@ -63,7 +63,7 @@ A query with named parameter-style parameters (recommended):
         .execute();
 ```
 
-A query with auto-expanding parameters when an `Iterable` supplied:
+A query with auto-expanding parameters when an `Iterable` supplied for an IN operator:
 
 ```java
   Stream<Animal> results = DB.with(dataSource)
