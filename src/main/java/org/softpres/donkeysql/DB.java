@@ -15,33 +15,41 @@ import java.util.Map;
  */
 public class DB {
 
-  public static DBConnection with(Connection connection) {
-    return new DBConnection(() -> connection, false);
+  public static ConnectionBuilder with(Connection connection) {
+    return new ConnectionBuilder(() -> connection, false);
   }
 
-  public static DBConnection with(DataSource dataSource) {
-    return new DBConnection(dataSource::getConnection, true);
+  public static ConnectionBuilder with(DataSource dataSource) {
+    return new ConnectionBuilder(dataSource::getConnection, true);
   }
 
-  public static class DBConnection {
+  public static class ConnectionBuilder {
     private final ConnectionFactory connectionFactory;
     private final boolean autoClose;
 
-    DBConnection(ConnectionFactory connectionFactory, boolean autoClose) {
+    ConnectionBuilder(ConnectionFactory connectionFactory, boolean autoClose) {
       this.connectionFactory = connectionFactory;
       this.autoClose = autoClose;
     }
 
-    public DBQueryBuilder query(String sql) {
-      return new DBQueryBuilder(this, sql);
+    public QueryBuilder query(String sql) {
+      return new QueryBuilder(this, sql);
     }
   }
 
-  public static class DBQueryBuilder {
-    private final DBConnection connection;
+  /**
+   * Signifies a class can construct a {@link StagedQuery} from a {@link RowMapper},
+   * mainly used to allow code reuse at a call-site.
+   */
+  interface MappableQuery {
+    <T> StagedQuery<T> map(RowMapper<T> mapper);
+  }
+
+  public static class QueryBuilder implements MappableQuery {
+    private final ConnectionBuilder connection;
     private final String sql;
 
-    DBQueryBuilder(DBConnection connection, String sql) {
+    QueryBuilder(ConnectionBuilder connection, String sql) {
       this.connection = connection;
       this.sql = sql;
     }
@@ -54,8 +62,8 @@ public class DB {
       return new NamedQueryBuilder(this).param(name, value);
     }
 
-    public <T> DBQuery<T> map(RowMapper<T> mapper) {
-      return new DBQuery<>(
+    public <T> StagedQuery<T> map(RowMapper<T> mapper) {
+      return new StagedQuery<>(
             connection.connectionFactory,
             connection.autoClose,
             mapper,
@@ -63,17 +71,17 @@ public class DB {
     }
   }
 
-  public static class IndexedQueryBuilder {
-    private final DBQueryBuilder builder;
+  public static class IndexedQueryBuilder implements MappableQuery {
+    private final QueryBuilder builder;
     private final Object[] params;
 
-    IndexedQueryBuilder(DBQueryBuilder builder, Object[] params) {
+    IndexedQueryBuilder(QueryBuilder builder, Object[] params) {
       this.builder = builder;
       this.params = params;
     }
 
-    public <T> DBQuery<T> map(RowMapper<T> mapper) {
-      return new DBQuery<>(
+    public <T> StagedQuery<T> map(RowMapper<T> mapper) {
+      return new StagedQuery<>(
             builder.connection.connectionFactory,
             builder.connection.autoClose,
             mapper,
@@ -81,11 +89,11 @@ public class DB {
     }
   }
 
-  public static class NamedQueryBuilder {
-    private final DBQueryBuilder builder;
+  public static class NamedQueryBuilder implements MappableQuery {
+    private final QueryBuilder builder;
     private final Map<String, Object> params;
 
-    NamedQueryBuilder(DBQueryBuilder builder) {
+    NamedQueryBuilder(QueryBuilder builder) {
       this.builder = builder;
       params = new HashMap<>();
     }
@@ -95,8 +103,8 @@ public class DB {
       return this;
     }
 
-    public <T> DBQuery<T> map(RowMapper<T> mapper) {
-      return new DBQuery<>(
+    public <T> StagedQuery<T> map(RowMapper<T> mapper) {
+      return new StagedQuery<>(
             builder.connection.connectionFactory,
             builder.connection.autoClose,
             mapper,

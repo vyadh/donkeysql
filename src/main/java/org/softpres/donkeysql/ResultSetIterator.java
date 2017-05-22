@@ -20,7 +20,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   private final ResultSet resultSet;
   private final RowMapper<T> mapper;
   private Next next;
-  private SQLResource onClose;
+  private QueryResource onClose;
 
   public ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
     this.resultSet = resultSet;
@@ -29,7 +29,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
     onClose = () -> {};
   }
 
-  ResultSetIterator<T> onClose(SQLResource onClose) {
+  ResultSetIterator<T> onClose(QueryResource onClose) {
     this.onClose = onClose;
     return this;
   }
@@ -86,7 +86,7 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   public void close() throws SQLException {
     next = FINISHED;
 
-    try (ResultSet rs = resultSet; SQLResource other = onClose) { }
+    try (ResultSet rs = resultSet; QueryResource other = onClose) { }
   }
 
   enum Next {

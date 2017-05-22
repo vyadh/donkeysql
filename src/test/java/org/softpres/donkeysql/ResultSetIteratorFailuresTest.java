@@ -96,7 +96,7 @@ public class ResultSetIteratorFailuresTest {
 
   @Test
   public void onCloseHandlerIsStillClosedIfResultSetCloseThrowsException() throws Exception {
-    SQLResource onClose = mock(SQLResource.class);
+    QueryResource onClose = mock(QueryResource.class);
     ResultSet resultSet = mock(ResultSet.class);
     doThrow(new SQLException("boom")).when(resultSet).close();
     ResultSetIterator<Integer> iterator = new ResultSetIterator<>(resultSet, rs -> 0).onClose(onClose);
