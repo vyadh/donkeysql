@@ -157,7 +157,7 @@ public class NamedParamQueryTest {
     ).normalise();
   }
 
-  static Stream<String> parameters(String statement) {
+  private static Stream<String> parameters(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
           .filter(token -> token instanceof StatementTokeniser.NamedParam)
           .map(token -> token.text);

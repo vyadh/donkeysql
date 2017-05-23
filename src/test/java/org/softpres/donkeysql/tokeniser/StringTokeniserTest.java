@@ -63,7 +63,7 @@ public class StringTokeniserTest {
    * Returns the parameter names specified in the statement at the appropriate positions
    * in the list, which allows supporting duplicate names in the statement.
    */
-  static Stream<String> parameters(String statement) {
+  private static Stream<String> parameters(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
           .filter(token -> token instanceof StatementTokeniser.NamedParam)
           .map(token -> token.text);

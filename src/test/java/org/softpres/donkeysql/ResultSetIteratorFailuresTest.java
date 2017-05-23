@@ -24,7 +24,7 @@ public class ResultSetIteratorFailuresTest {
   private ResultSet resultSet;
 
   @Before
-  public void setup() throws SQLException {
+  public void createIterator() throws SQLException {
     resultSet = mock(ResultSet.class);
     iterator = new ResultSetIterator<>(resultSet, rs -> rs.getInt(1));
   }
@@ -68,6 +68,7 @@ public class ResultSetIteratorFailuresTest {
   @SuppressWarnings("EmptyTryBlock")
   public void autoClosableContractRespected() throws SQLException {
     try (ResultSetIterator<Integer> rsi = iterator) {
+      // Used to close resources
     }
 
     verify(resultSet).close();

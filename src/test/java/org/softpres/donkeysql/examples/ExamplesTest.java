@@ -15,7 +15,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -26,7 +25,7 @@ public class ExamplesTest {
   private DataSource dataSource;
 
   @Before
-  public void setup() throws Exception {
+  public void populateDataSource() throws Exception {
     dataSource = TestDB.createPopulatedDataSource();
   }
 

@@ -63,6 +63,7 @@ public class StagedQuery<T> {
     return () -> {
       if (closeConnection) {
         try (PreparedStatement s = statement; Connection c = connection) {
+          // Used to close resources
         }
       } else {
         statement.close();

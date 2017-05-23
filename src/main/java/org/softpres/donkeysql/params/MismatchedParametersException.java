@@ -13,7 +13,7 @@ import java.util.Arrays;
  */
 public class MismatchedParametersException extends UncheckedSQLException {
 
-  public MismatchedParametersException(String statement, Object[] params) {
+  MismatchedParametersException(String statement, Object[] params) {
     super(message(statement, params));
   }
 

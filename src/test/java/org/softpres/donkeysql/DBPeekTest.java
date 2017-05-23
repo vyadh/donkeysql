@@ -22,7 +22,7 @@ public class DBPeekTest {
   private Capture capture;
 
   @Before
-  public void setup() throws Exception {
+  public void populateDataSource() throws Exception {
     dataSource = TestDB.createPopulatedDataSource();
     capture = new Capture();
   }

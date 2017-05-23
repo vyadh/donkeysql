@@ -58,10 +58,10 @@ public class StatementTokeniser {
     private static final Space SPACE = new Space();
     private static final IndexedParam INDEXED_PARAM = new IndexedParam();
 
-    StringBuilder buffer = new StringBuilder();
+    private final StringBuilder buffer = new StringBuilder();
+    private final List<Token> tokens = new ArrayList<>();
     boolean quoting = false;
     boolean namedParam = false;
-    List<Token> tokens = new ArrayList<>();
 
     private void quote() {
       if (quoting) {

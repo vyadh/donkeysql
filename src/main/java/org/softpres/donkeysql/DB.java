@@ -41,7 +41,7 @@ public class DB {
    * Signifies a class can construct a {@link StagedQuery} from a {@link RowMapper},
    * mainly used to allow code reuse at a call-site.
    */
-  interface MappableQuery {
+  public interface MappableQuery {
     <T> StagedQuery<T> map(RowMapper<T> mapper);
   }
 

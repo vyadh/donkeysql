@@ -86,7 +86,9 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   public void close() throws SQLException {
     next = FINISHED;
 
-    try (ResultSet rs = resultSet; QueryResource other = onClose) { }
+    try (ResultSet rs = resultSet; QueryResource other = onClose) {
+      // Used to close resources
+    }
   }
 
   enum Next {

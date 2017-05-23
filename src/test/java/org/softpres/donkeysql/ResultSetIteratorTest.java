@@ -29,7 +29,7 @@ public class ResultSetIteratorTest {
   private RowMapper<Integer> intMapper;
 
   @Before
-  public void setup() throws Exception {
+  public void populateDataSource() throws Exception {
     dataSource = TestDB.createPopulatedDataSource();
     intMapper = resultSet -> resultSet.getInt("id");
   }
@@ -221,8 +221,8 @@ public class ResultSetIteratorTest {
   }
 
   private static class Animal {
-    String name;
-    int legs;
+    final String name;
+    final int legs;
 
     public Animal(String name, int legs) {
       this.name = name;

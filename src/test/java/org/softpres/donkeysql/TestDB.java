@@ -26,7 +26,7 @@ public class TestDB {
     return dataSource;
   }
 
-  private static DataSource createDataSource() throws SQLException {
+  private static DataSource createDataSource() {
     return JdbcConnectionPool.create("jdbc:h2:mem:", "user", "pass");
   }
 

@@ -6,7 +6,6 @@ package org.softpres.donkeysql.params;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.softpres.donkeysql.params.Humanise.paramValue;

@@ -23,7 +23,7 @@ public class DBTest {
   private DataSource dataSource;
 
   @Before
-  public void setup() throws Exception {
+  public void populateDataSource() throws Exception {
     dataSource = TestDB.createPopulatedDataSource();
   }
 
