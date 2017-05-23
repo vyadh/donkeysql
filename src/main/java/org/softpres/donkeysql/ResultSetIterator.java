@@ -22,11 +22,11 @@ public class ResultSetIterator<T> implements Iterator<T>, AutoCloseable {
   private Next next;
   private QueryResource onClose;
 
-  public ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
+  ResultSetIterator(ResultSet resultSet, RowMapper<T> mapper) {
     this.resultSet = resultSet;
     this.mapper = mapper;
     next = UNKNOWN;
-    onClose = () -> {};
+    onClose = () -> { };
   }
 
   ResultSetIterator<T> onClose(QueryResource onClose) {

@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/vyadh/donkeysql.svg?branch=master)](https://travis-ci.org/vyadh/donkeysql)
 [![codecov](https://codecov.io/gh/vyadh/donkeysql/branch/master/graph/badge.svg)](https://codecov.io/gh/vyadh/donkeysql)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/24302f1aa4194276ba13d00b81137d1e)](https://www.codacy.com/app/vyadh/donkeysql?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=vyadh/donkeysql&amp;utm_campaign=Badge_Grade)
 
 Donkey SQL
 ==========

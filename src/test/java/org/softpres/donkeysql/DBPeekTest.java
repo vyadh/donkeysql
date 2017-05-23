@@ -32,7 +32,7 @@ public class DBPeekTest {
     Stream<Integer> legs = DB.with(dataSource)
           .query("SELECT legs FROM animals WHERE name = 'dog'")
           .map(resultSet -> resultSet.getInt("legs"))
-          .peek(sql -> {})
+          .peek(sql -> { })
           .execute();
 
     assertThat(legs).containsOnly(4);
