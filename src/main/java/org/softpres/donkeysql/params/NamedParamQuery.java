@@ -4,7 +4,6 @@
 package org.softpres.donkeysql.params;
 
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.IndexedParam;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.NamedParam;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.Punc;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.Token;

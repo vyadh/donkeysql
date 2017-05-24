@@ -4,6 +4,7 @@
 package org.softpres.donkeysql.tokeniser;
 
 import org.junit.Test;
+import org.softpres.donkeysql.tokeniser.StatementTokeniser.*;
 
 import java.util.stream.Stream;
 
@@ -16,57 +17,87 @@ public class StringTokeniserTest {
 
   @Test
   public void parametersWithEmptyString() {
-    assertThat(parameters(""))
+    assertThat(tokenise(""))
           .isEmpty();
   }
 
   @Test
-  public void parametersWithNoParameters() {
-    assertThat(parameters("SELECT * FROM table WHERE id > 100"))
-          .isEmpty();
+  public void statementWithLiteralValue() {
+    assertThat(tokenise("SELECT * FROM table WHERE id > 100")).containsExactly(
+          new Word("SELECT"),
+          new Punc('*'),
+          new Word("FROM"),
+          new Word("table"),
+          new Word("WHERE"),
+          new Word("id"),
+          new Punc('>'),
+          new Word("100")
+    );
   }
 
   @Test
-  public void parametersWithOneParameter() {
-    assertThat(parameters("stuff WHERE something < :id"))
-          .containsExactly("id");
+  public void statementWithQuotedValue() {
+    assertThat(tokenise("SELECT * FROM table WHERE column LIKE '%VAL'")).containsExactly(
+          new Word("SELECT"),
+          new Punc('*'),
+          new Word("FROM"),
+          new Word("table"),
+          new Word("WHERE"),
+          new Word("column"),
+          new Word("LIKE"),
+          new Quote(),
+          new QuotedWord("%VAL"),
+          new Quote()
+    );
   }
 
   @Test
-  public void parametersWithMultipleParameters() {
-    assertThat(parameters("SELECT stuff FROM table WHERE something < :abc AND other = :xyz"))
-          .containsExactly("abc", "xyz");
+  public void parametersWithNamedParameters() {
+    assertThat(tokenise("WHERE something < :abc AND other = :xyz")).containsExactly(
+          new Word("WHERE"),
+          new Word("something"),
+          new Punc('<'),
+          new NamedParam("abc"),
+          new Word("AND"),
+          new Word("other"),
+          new Punc('='),
+          new NamedParam("xyz")
+    );
   }
 
   @Test
-  public void parametersWithDuplicateParameters() {
-    assertThat(parameters("SELECT count(1) FROM people WHERE :age >= 18 AND :age <= 60"))
-          .containsExactly("age", "age");
+  public void parametersWithIndexedParameters() {
+    assertThat(tokenise("WHERE something < ? AND other = ?")).containsExactly(
+          new Word("WHERE"),
+          new Word("something"),
+          new Punc('<'),
+          new IndexedParam(),
+          new Word("AND"),
+          new Word("other"),
+          new Punc('='),
+          new IndexedParam()
+    );
   }
 
   @Test
-  public void parametersWithRoundBracketsEitherSide() {
-    assertThat(parameters("SELECT count(1) FROM people WHERE (:low >= 18 AND 60 > :high)"))
-          .containsExactly("low", "high");
+  public void whereWithInCondition() {
+    assertThat(tokenise("WHERE id IN (?, ?, ?)")).containsExactly(
+          new Word("WHERE"),
+          new Word("id"),
+          new Word("IN"),
+          new Punc('('),
+          new IndexedParam(),
+          new Punc(','),
+          new IndexedParam(),
+          new Punc(','),
+          new IndexedParam(),
+          new Punc(')')
+    );
   }
 
-  @Test
-  public void parametersWithComplexStatement() {
-    assertThat(parameters(
-          "SELECT count(1) FROM people WHERE" +
-                " (name LIKE :name_pattern) AND" +
-                " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister))"))
-          .containsExactly("name_pattern", "age", "age", "sister");
-  }
-
-  /**
-   * Returns the parameter names specified in the statement at the appropriate positions
-   * in the list, which allows supporting duplicate names in the statement.
-   */
-  private static Stream<String> parameters(String statement) {
+  private static Stream<StatementTokeniser.Token> tokenise(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
-          .filter(token -> token instanceof StatementTokeniser.NamedParam)
-          .map(token -> token.text);
+          .filter(token -> !(token instanceof StatementTokeniser.Space));
   }
 
 }

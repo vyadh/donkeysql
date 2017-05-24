@@ -121,7 +121,7 @@ public class StatementTokeniser {
     }
   }
   
-  public static abstract class Token {
+  public abstract static class Token {
     public final String text;
 
     public Token(String text) {

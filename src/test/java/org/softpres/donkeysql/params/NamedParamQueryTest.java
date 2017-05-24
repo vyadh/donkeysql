@@ -170,7 +170,7 @@ public class NamedParamQueryTest {
   private Map<String, Object> params(Object... params) {
     Map<String, Object> result = new HashMap<>();
     for (int i = 0; i < params.length; i += 2) {
-      result.put((String)params[i], params[i+1]);
+      result.put((String)params[i], params[i + 1]);
     }
     return result;
   }
