@@ -72,8 +72,12 @@ public class StatementTokeniser {
     }
 
     private void punctuation(char c) {
-      endWord();
-      tokens.add(new Punc(c));
+      if (quoting) {
+        buffer.append(c);
+      } else {
+        endWord();
+        tokens.add(new Punc(c));
+      }
     }
 
     private void whitespace() {
@@ -103,8 +107,10 @@ public class StatementTokeniser {
         buffer.setLength(0);
         if (namedParam) {
           tokens.add(new NamedParam(word));
+        } else if (quoting) {
+          tokens.add(new QuotedWord(word));
         } else {
-          tokens.add(quoting ? new QuotedWord(word) : new Word(word));
+          tokens.add(new Word(word));
         }
       }
       namedParam = false;
@@ -118,8 +124,21 @@ public class StatementTokeniser {
   public static abstract class Token {
     public final String text;
 
-    Token(String text) {
+    public Token(String text) {
       this.text = text;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Token token = (Token) o;
+      return Objects.equals(text, token.text);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(text);
     }
 
     @Override
@@ -128,17 +147,19 @@ public class StatementTokeniser {
     }
   }
   
-  private static class Quote extends Token {
+  static class Quote extends Token {
     Quote() {
       super("'");
     }
   }
+
   public static class Punc extends Token {
     public Punc(char c) {
       super(String.valueOf(c));
     }
   }
-  private static class Space extends Token {
+
+  static class Space extends Token {
     Space() {
       super(" ");
     }
@@ -148,21 +169,25 @@ public class StatementTokeniser {
       return " ";
     }
   }
-  private static class QuotedWord extends Token {
+
+  static class QuotedWord extends Token {
     QuotedWord(String text) {
       super(text);
     }
   }
-  private static class Word extends Token {
+
+  static class Word extends Token {
     Word(String text) {
       super(text);
     }
   }
+
   public static class IndexedParam extends Token {
-    public IndexedParam() {
+    IndexedParam() {
       super("?");
     }
   }
+
   public static class NamedParam extends Token {
     NamedParam(String text) {
       super(text);

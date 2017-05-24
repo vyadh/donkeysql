@@ -111,11 +111,12 @@ class NamedParamQuery implements ParamQuery {
           token.text;
   }
 
-  /** Represents a parameter with associated value. */
-  static class ValueParam extends IndexedParam {
+  /** Represents a parameter with an associated value. */
+  static class ValueParam extends Token {
     private final Object value;
 
     ValueParam(Object value) {
+      super("?");
       this.value = value;
     }
   }
