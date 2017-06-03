@@ -6,8 +6,13 @@ package org.softpres.donkeysql.tokeniser;
 import java.util.*;
 
 /**
- * Determines positions of parameters within an SQL string, and allows
- * their replacement to translate to a standard JDBC string.
+ * Simple tokeniser to determine positions of parameters within an SQL string,
+ * allowing their replacement to translate to a standard JDBC string.
+ *
+ * If we need something more sophisticated we can migrate to a JavaCC scheme.
+ *
+ * Punctuation characters (aside from '_') are derived from Ron Savage's BNF grammar.
+ * @see <a href="https://ronsavage.github.io/SQL/sql-2003-2.bnf.html">Ron Savage's BNF grammar</a>
  */
 public class StatementTokeniser {
 
@@ -19,9 +24,19 @@ public class StatementTokeniser {
         case '\'':
           state.quote();
           break;
+        case '"':
+        case '&':
         case '(':
         case ')':
+        case '[':
+        case ']':
+        case '{':
+        case '}':
         case ',':
+        case '.':
+        case ';':
+        case '^':
+        case '|':
         case '=':
         case '>':
         case '<':
@@ -37,11 +52,15 @@ public class StatementTokeniser {
         case '\t':
           state.whitespace();
           break;
+        case '\n':
+        case '\r':
+          state.newline();
+          break;
         case '?':
           state.questionMark();
           break;
         case ':':
-          state.startNamedParam();
+          state.colon();
           break;
         default:
           state.continueWord(c);
@@ -56,6 +75,7 @@ public class StatementTokeniser {
   private static class State {
     private static final Quote QUOTE = new Quote();
     private static final Space SPACE = new Space();
+    private static final Newline NEWLINE = new Newline();
     private static final IndexedParam INDEXED_PARAM = new IndexedParam();
 
     private final StringBuilder buffer = new StringBuilder();
@@ -85,6 +105,11 @@ public class StatementTokeniser {
       tokens.add(SPACE);
     }
 
+    private void newline() {
+      endWord();
+      tokens.add(NEWLINE);
+    }
+
     private void questionMark() {
       if (quoting) {
         buffer.append("?"); // Push back
@@ -93,7 +118,7 @@ public class StatementTokeniser {
       }
     }
 
-    private void startNamedParam() {
+    private void colon() {
       if (quoting) {
         buffer.append(":"); // Push back
       } else {
@@ -167,6 +192,17 @@ public class StatementTokeniser {
     @Override
     public String toString() {
       return " ";
+    }
+  }
+
+  static class Newline extends Token {
+    Newline() {
+      super("\n");
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "()";
     }
   }
 

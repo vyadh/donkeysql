@@ -52,6 +52,24 @@ public class StringTokeniserTest {
   }
 
   @Test
+  public void statementWithNewLines() {
+    assertThat(tokenise("SELECT *\nFROM table\nWHERE column LIKE '%VAL'")).containsExactly(
+          new Word("SELECT"),
+          new Punc('*'),
+          new Newline(),
+          new Word("FROM"),
+          new Word("table"),
+          new Newline(),
+          new Word("WHERE"),
+          new Word("column"),
+          new Word("LIKE"),
+          new Quote(),
+          new QuotedWord("%VAL"),
+          new Quote()
+    );
+  }
+
+  @Test
   public void parametersWithNamedParameters() {
     assertThat(tokenise("WHERE something < :abc AND other = :xyz")).containsExactly(
           new Word("WHERE"),
@@ -80,7 +98,7 @@ public class StringTokeniserTest {
   }
 
   @Test
-  public void whereWithInCondition() {
+  public void whereWithIndexedInCondition() {
     assertThat(tokenise("WHERE id IN (?, ?, ?)")).containsExactly(
           new Word("WHERE"),
           new Word("id"),
@@ -91,6 +109,18 @@ public class StringTokeniserTest {
           new IndexedParam(),
           new Punc(','),
           new IndexedParam(),
+          new Punc(')')
+    );
+  }
+
+  @Test
+  public void whereWithNamedInCondition() {
+    assertThat(tokenise("WHERE id IN (:values)")).containsExactly(
+          new Word("WHERE"),
+          new Word("id"),
+          new Word("IN"),
+          new Punc('('),
+          new NamedParam("values"),
           new Punc(')')
     );
   }
