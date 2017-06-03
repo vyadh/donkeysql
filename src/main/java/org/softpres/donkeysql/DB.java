@@ -54,12 +54,17 @@ public class DB {
       this.sql = sql;
     }
 
+    /** Convenience method to allow delegating setting named params. */
+    public NamedQueryBuilder named() {
+      return new NamedQueryBuilder(this);
+    }
+
     public IndexedQueryBuilder params(Object... params) {
       return new IndexedQueryBuilder(this, params);
     }
 
     public NamedQueryBuilder param(String name, Object value) {
-      return new NamedQueryBuilder(this).param(name, value);
+      return named().param(name, value);
     }
 
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {

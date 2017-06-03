@@ -88,6 +88,22 @@ public class DBTest {
   }
 
   @Test
+  public void queryWithDedicatedNamedParameterBuilder() {
+    DB.NamedQueryBuilder namedBuilder = DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE name = :name1 OR name = :name2")
+          .named();
+
+    List<String> results = namedBuilder
+          .param("name1", "dog")
+          .param("name2", "fish")
+          .map(resultSet -> resultSet.getString("name"))
+          .execute()
+          .collect(toList());
+
+    assertThat(results).containsOnly("dog", "fish");
+  }
+
+  @Test
   public void queryWithConcatMapping() {
     List<String> results = DB.with(dataSource)
           .query("SELECT id, name FROM animals WHERE name LIKE ?")
