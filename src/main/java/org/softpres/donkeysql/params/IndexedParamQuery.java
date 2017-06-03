@@ -4,6 +4,7 @@
 package org.softpres.donkeysql.params;
 
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
+import org.softpres.donkeysql.tokeniser.Tokens;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,7 +52,7 @@ class IndexedParamQuery implements ParamQuery {
    */
   static long count(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
-          .filter(token -> token instanceof StatementTokeniser.IndexedParam)
+          .filter(token -> token instanceof Tokens.IndexedParam)
           .count();
   }
 
@@ -74,7 +75,7 @@ class IndexedParamQuery implements ParamQuery {
     ParamIterator paramIterator = new ParamIterator(params);
 
     return StatementTokeniser.tokenise(statement).stream()
-          .map(token -> token instanceof StatementTokeniser.IndexedParam ?
+          .map(token -> token instanceof Tokens.IndexedParam ?
                 Humanise.paramValue(paramIterator.next()) : token.text)
           .collect(joining());
   }

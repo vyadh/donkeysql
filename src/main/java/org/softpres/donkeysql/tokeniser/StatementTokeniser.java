@@ -5,6 +5,8 @@ package org.softpres.donkeysql.tokeniser;
 
 import java.util.*;
 
+import org.softpres.donkeysql.tokeniser.Tokens.*;
+
 /**
  * Simple tokeniser to determine positions of parameters within an SQL string,
  * allowing their replacement to translate to a standard JDBC string.
@@ -165,94 +167,4 @@ public class StatementTokeniser {
     }
   }
   
-  public abstract static class Token {
-    public final String text;
-
-    public Token(String text) {
-      this.text = text;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Token token = (Token) o;
-      return Objects.equals(text, token.text);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(text);
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName() + '(' + text + ')';
-    }
-  }
-  
-  static class Quote extends Token {
-    Quote() {
-      super("'");
-    }
-  }
-
-  public static class Punc extends Token {
-    public Punc(char c) {
-      super(String.valueOf(c));
-    }
-  }
-
-  static class Space extends Token {
-    Space() {
-      super(" ");
-    }
-
-    @Override
-    public String toString() {
-      return " ";
-    }
-  }
-
-  static class Newline extends Token {
-    Newline() {
-      super("\n");
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName() + "()";
-    }
-  }
-
-  static class QuotedWord extends Token {
-    QuotedWord(String text) {
-      super(text);
-    }
-  }
-
-  static class Word extends Token {
-    Word(String text) {
-      super(text);
-    }
-  }
-
-  public static class IndexedParam extends Token {
-    IndexedParam() {
-      super("?");
-    }
-  }
-
-  public static class NamedParam extends Token {
-    NamedParam(String text) {
-      super(text);
-    }
-  }
-
-  public static class OptimisedNamedParam extends NamedParam {
-    OptimisedNamedParam(String text) {
-      super(text);
-    }
-  }
-
 }

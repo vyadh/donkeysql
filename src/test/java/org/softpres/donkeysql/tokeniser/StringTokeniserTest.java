@@ -4,7 +4,7 @@
 package org.softpres.donkeysql.tokeniser;
 
 import org.junit.Test;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.*;
+import org.softpres.donkeysql.tokeniser.Tokens.*;
 
 import java.util.stream.Stream;
 
@@ -151,9 +151,9 @@ public class StringTokeniserTest {
     );
   }
 
-  private static Stream<StatementTokeniser.Token> tokenise(String statement) {
+  private static Stream<Token> tokenise(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
-          .filter(token -> !(token instanceof StatementTokeniser.Space));
+          .filter(token -> !(token instanceof Space));
   }
 
 }

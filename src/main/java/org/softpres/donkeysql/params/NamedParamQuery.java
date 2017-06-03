@@ -4,10 +4,10 @@
 package org.softpres.donkeysql.params;
 
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.NamedParam;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.OptimisedNamedParam;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.Punc;
-import org.softpres.donkeysql.tokeniser.StatementTokeniser.Token;
+import org.softpres.donkeysql.tokeniser.Tokens.NamedParam;
+import org.softpres.donkeysql.tokeniser.Tokens.OptimisedNamedParam;
+import org.softpres.donkeysql.tokeniser.Tokens.Punc;
+import org.softpres.donkeysql.tokeniser.Tokens.Token;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -118,8 +118,8 @@ class NamedParamQuery implements ParamQuery {
   }
 
   /** Represents a parameter with an associated value. */
-  static class ValueParam extends Token {
-    private final Object value;
+  public static class ValueParam extends Token {
+    final Object value;
 
     ValueParam(Object value) {
       super("?");

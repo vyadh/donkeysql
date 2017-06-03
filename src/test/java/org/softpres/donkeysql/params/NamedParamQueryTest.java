@@ -6,6 +6,7 @@ package org.softpres.donkeysql.params;
 
 import org.junit.Test;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
+import org.softpres.donkeysql.tokeniser.Tokens;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -170,7 +171,7 @@ public class NamedParamQueryTest {
 
   private static Stream<String> parameters(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
-          .filter(token -> token instanceof StatementTokeniser.NamedParam)
+          .filter(token -> token instanceof Tokens.NamedParam)
           .map(token -> token.text);
   }
 
