@@ -52,6 +52,20 @@ public class StringTokeniserTest {
   }
 
   @Test
+  public void statementWithQuotedPunctuation() {
+    String specialCharacters = "&()[]{},.;^|=><+-*/%!@?: \t\n\r";
+
+    assertThat(tokenise("WHERE text = '" + specialCharacters + "'")).containsExactly(
+          new Word("WHERE"),
+          new Word("text"),
+          new Punc('='),
+          new Quote(),
+          new QuotedWord(specialCharacters),
+          new Quote()
+    );
+  }
+
+  @Test
   public void statementWithNewLines() {
     assertThat(tokenise("SELECT *\nFROM table\nWHERE column LIKE '%VAL'")).containsExactly(
           new Word("SELECT"),

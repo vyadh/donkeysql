@@ -50,17 +50,17 @@ public class StatementTokeniser {
           break;
         case ' ':
         case '\t':
-          state.whitespace();
+          state.whitespace(c);
           break;
         case '\n':
         case '\r':
-          state.newline();
+          state.newline(c);
           break;
         case '?':
-          state.questionMark();
+          state.questionMark(c);
           break;
         case ':':
-          state.colon();
+          state.colon(c);
           break;
         default:
           state.continueWord(c);
@@ -92,38 +92,44 @@ public class StatementTokeniser {
     }
 
     private void punctuation(char c) {
-      if (quoting) {
-        buffer.append(c);
-      } else {
+      if (!processQuoted(c)) {
         endWord();
         tokens.add(new Punc(c));
       }
     }
 
-    private void whitespace() {
-      endWord();
-      tokens.add(SPACE);
+    private void whitespace(char c) {
+      if (!processQuoted(c)) {
+        endWord();
+        tokens.add(SPACE);
+      }
     }
 
-    private void newline() {
-      endWord();
-      tokens.add(NEWLINE);
+    private void newline(char c) {
+      if (!processQuoted(c)) {
+        endWord();
+        tokens.add(NEWLINE);
+      }
     }
 
-    private void questionMark() {
-      if (quoting) {
-        buffer.append("?"); // Push back
-      } else {
+    private void questionMark(char c) {
+      if (!processQuoted(c)) {
         tokens.add(INDEXED_PARAM);
       }
     }
 
-    private void colon() {
-      if (quoting) {
-        buffer.append(":"); // Push back
-      } else {
+    private void colon(char c) {
+      if (!processQuoted(c)) {
         namedParam = true;
       }
+    }
+
+    /** Provides a shorter syntax to consume special characters when quoted. */
+    private boolean processQuoted(char c) {
+      if (quoting) {
+        buffer.append(c);
+      }
+      return quoting;
     }
 
     private void endWord() {
