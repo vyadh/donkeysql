@@ -26,6 +26,13 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.8.+'
 }
 
+test {
+    testLogging {
+        events "failed"
+        exceptionFormat "short"
+    }
+}
+
 jacocoTestReport {
     reports {
         xml.enabled = true
