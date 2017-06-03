@@ -139,9 +139,9 @@ public class DBTest {
   @Test
   public void queryWithIterableNamedParameters() {
     Stream<String> names = DB.with(dataSource)
-          .query("SELECT name FROM animals WHERE legs IN (:legs) OR name IN (:names)")
+          .query("SELECT name FROM animals WHERE legs IN (:legs) OR name IN (@names)")
           .param("legs", Arrays.asList(6, 8))
-          .param("names", Arrays.asList("dog", "cat"))
+          .param("names", Arrays.asList("beetle", "dog", "cat"))
           .map(resultSet -> resultSet.getString("name"))
           .execute();
 

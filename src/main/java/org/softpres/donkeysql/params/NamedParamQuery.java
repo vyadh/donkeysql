@@ -5,6 +5,7 @@ package org.softpres.donkeysql.params;
 
 import org.softpres.donkeysql.tokeniser.StatementTokeniser;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.NamedParam;
+import org.softpres.donkeysql.tokeniser.StatementTokeniser.OptimisedNamedParam;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.Punc;
 import org.softpres.donkeysql.tokeniser.StatementTokeniser.Token;
 
@@ -59,7 +60,7 @@ class NamedParamQuery implements ParamQuery {
     if (token instanceof NamedParam) {
       Object value = lookupValue.apply(token.text);
       if (value instanceof Iterable<?>) {
-        return expandedValues((Iterable<?>)value);
+        return expandedValues((Iterable<?>)value, token.getClass());
       } else {
         return Stream.of(new ValueParam(value));
       }
@@ -67,20 +68,26 @@ class NamedParamQuery implements ParamQuery {
     return Stream.of(token);
   }
 
-  /**
-   * Expand iterable values to a power of 2 (by repeating the last element) to
-   * give SQL optimisers a better chance of caching the {@link PreparedStatement}
-   * on IN operators (assumes only used for IN operator currently, need to improve
-   * Tokeniser to indicate last operator at some point - e.g. for use in VALUES).
-   */
-  private static Stream<Token> expandedValues(Iterable<?> iterable) {
-    List<?> list = Streams.list(iterable);
-    Stream<?> padded = Streams.padWithLastTo(list, PowerOfTwo.nextOrZero(list.size()));
-
+  private static Stream<Token> expandedValues(Iterable<?> iterable, Class<? extends Token> type) {
     return Streams.intersperse(
-          padded.map(ValueParam::new),
+          optimise(iterable, type).map(ValueParam::new),
           new Punc(',')
     );
+  }
+
+  /**
+   * When indicated by use of the {@link OptimisedNamedParam} token, expand iterable values
+   * to a power of 2 (by repeating the last element), giving SQL optimisers a better chance
+   * of caching the {@link PreparedStatement} on IN operators (assumes users will only specify
+   * when used on IN operator.
+   */
+  private static Stream<?> optimise(Iterable<?> iterable, Class<? extends Token> type) {
+    if (type.equals(OptimisedNamedParam.class)) {
+      List<?> list = Streams.list(iterable);
+      return Streams.padWithLastTo(list, PowerOfTwo.nextOrZero(list.size()));
+    } else {
+      return Streams.from(iterable);
+    }
   }
 
   private void applyParameters(PreparedStatement statement) throws SQLException {

@@ -62,6 +62,9 @@ public class StatementTokeniser {
         case ':':
           state.colon(c);
           break;
+        case '@':
+          state.at(c);
+          break;
         default:
           state.continueWord(c);
       }
@@ -82,6 +85,7 @@ public class StatementTokeniser {
     private final List<Token> tokens = new ArrayList<>();
     boolean quoting = false;
     boolean namedParam = false;
+    boolean optimisedNamedParam = false;
 
     private void quote() {
       if (quoting) {
@@ -124,6 +128,12 @@ public class StatementTokeniser {
       }
     }
 
+    private void at(char c) {
+      if (!processQuoted(c)) {
+        optimisedNamedParam = true;
+      }
+    }
+
     /** Provides a shorter syntax to consume special characters when quoted. */
     private boolean processQuoted(char c) {
       if (quoting) {
@@ -138,6 +148,8 @@ public class StatementTokeniser {
         buffer.setLength(0);
         if (namedParam) {
           tokens.add(new NamedParam(word));
+        } else if (optimisedNamedParam) {
+          tokens.add(new OptimisedNamedParam(word));
         } else if (quoting) {
           tokens.add(new QuotedWord(word));
         } else {
@@ -145,6 +157,7 @@ public class StatementTokeniser {
         }
       }
       namedParam = false;
+      optimisedNamedParam = false;
     }
 
     private void continueWord(char c) {
@@ -232,6 +245,12 @@ public class StatementTokeniser {
 
   public static class NamedParam extends Token {
     NamedParam(String text) {
+      super(text);
+    }
+  }
+
+  public static class OptimisedNamedParam extends NamedParam {
+    OptimisedNamedParam(String text) {
       super(text);
     }
   }

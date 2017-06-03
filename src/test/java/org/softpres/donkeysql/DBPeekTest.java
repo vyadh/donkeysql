@@ -80,12 +80,24 @@ public class DBPeekTest {
     DB.with(dataSource)
           .query("SELECT name FROM animals WHERE legs IN (:legs) OR name IN (:names)")
           .param("legs", Arrays.asList(6, 8))
-          .param("names", Arrays.asList("dog", "cat"))
+          .param("names", Arrays.asList("dog", "cat", "bird"))
           .map(resultSet -> resultSet.getString("name"))
           .peek(capture::set);
 
     assertThat(capture.sql)
-          .isEqualTo("SELECT name FROM animals WHERE legs IN (6,8) OR name IN ('dog','cat')");
+          .isEqualTo("SELECT name FROM animals WHERE legs IN (6,8) OR name IN ('dog','cat','bird')");
+  }
+
+  @Test
+  public void queryWithIterableOptimisedNamedParameters() {
+    DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE name IN (@names)")
+          .param("names", Arrays.asList("dog", "cat", "bird"))
+          .map(resultSet -> resultSet.getString("name"))
+          .peek(capture::set);
+
+    assertThat(capture.sql)
+          .isEqualTo("SELECT name FROM animals WHERE name IN ('dog','cat','bird','bird')");
   }
 
   private static class Capture {

@@ -64,11 +64,14 @@ A query with named parameter-style parameters (recommended):
         .execute();
 ```
 
-A query with auto-expanding parameters when an `Iterable` supplied for an IN operator:
+A query with auto-expanding parameters when an `Iterable` supplied for an IN operator.
+Note that this example uses a '@' designation of the named parameter, which indicates that the
+parameters should be optimised for `PreparedStatement` caching. If this is undesirable, use the
+regular ':' syntax.
 
 ```java
   Stream<Animal> results = DB.with(dataSource)
-        .query("SELECT name, legs FROM animals WHERE legs IN (:specificLegs)")
+        .query("SELECT name, legs FROM animals WHERE legs IN (@specificLegs)")
         .param("specificLegs", Arrays.asList(0, 8))
         .map(resultSet -> new Animal(
               resultSet.getString("name"),

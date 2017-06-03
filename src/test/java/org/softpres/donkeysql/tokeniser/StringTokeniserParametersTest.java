@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for {@link StatementTokeniser}.
+ * Unit tests for parameter methods in {@link StatementTokeniser}.
  */
 public class StringTokeniserParametersTest {
 
@@ -39,6 +39,12 @@ public class StringTokeniserParametersTest {
   }
 
   @Test
+  public void parametersWithOptimisedParameters() {
+    assertThat(parameters("SELECT 1 FROM table WHERE col1 = :one AND col2 IN (@two)"))
+          .containsExactly("one", "two");
+  }
+
+  @Test
   public void parametersWithDuplicateParameters() {
     assertThat(parameters("SELECT count(1) FROM people WHERE :age >= 18 AND :age <= 60"))
           .containsExactly("age", "age");
@@ -55,8 +61,9 @@ public class StringTokeniserParametersTest {
     assertThat(parameters(
           "SELECT count(1) FROM people WHERE" +
                 " (name LIKE :name_pattern) AND" +
-                " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister))"))
-          .containsExactly("name_pattern", "age", "age", "sister");
+                " ((:age >= 18 AND :age <= 60) OR (sibling LIKE :sister)) AND" +
+                " job IN (@academia)"))
+          .containsExactly("name_pattern", "age", "age", "sister", "academia");
   }
 
   /**

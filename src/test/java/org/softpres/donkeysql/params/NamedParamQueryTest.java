@@ -115,8 +115,19 @@ public class NamedParamQueryTest {
   }
 
   @Test
-  public void extendParamsToSizePowerOfTwoPlaceHolders() {
+  public void doNotExtendParamsToSizePowerOfTwoWhenNotExplicitlyIndicated() {
     String sql = "WHERE n IN (:ns)";
+
+    assertThat(normalise(sql, params("ns", items(1, 2, 3))))
+          .isEqualTo("WHERE n IN (?,?,?)");
+
+    assertThat(parameterValues(sql, params("ns", items(1, 2, 3))))
+          .containsExactly(1, 2, 3);
+  }
+
+  @Test
+  public void extendParamsToSizePowerOfTwoPlaceHolders() {
+    String sql = "WHERE n IN (@ns)";
     assertThat(normalise(sql, params("ns", items())))
           .isEqualTo("WHERE n IN ()");
     assertThat(normalise(sql, params("ns", items(1))))
@@ -133,7 +144,7 @@ public class NamedParamQueryTest {
 
   @Test
   public void extendParamsToSizePowerOfTwoPlaceValues() {
-    String sql = "WHERE n IN (:ns)";
+    String sql = "WHERE n IN (@ns)";
     assertThat(parameterValues(sql, params("ns", items())))
           .isEmpty();
     assertThat(parameterValues(sql, params("ns", items(1))))

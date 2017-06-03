@@ -78,7 +78,7 @@ public class ExamplesTest {
   @Test
   public void queryWithExpandedNamedParameters() throws SQLException {
     Stream<Animal> results = DB.with(dataSource)
-          .query("SELECT name, legs FROM animals WHERE legs IN (:specificLegs)")
+          .query("SELECT name, legs FROM animals WHERE legs IN (@specificLegs)")
           .param("specificLegs", Arrays.asList(0, 8))
           .map(resultSet -> new Animal(
                 resultSet.getString("name"),

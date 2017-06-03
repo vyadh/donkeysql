@@ -139,6 +139,18 @@ public class StringTokeniserTest {
     );
   }
 
+  @Test
+  public void whereWithOptimisedInCondition() {
+    assertThat(tokenise("WHERE id IN (@values)")).containsExactly(
+          new Word("WHERE"),
+          new Word("id"),
+          new Word("IN"),
+          new Punc('('),
+          new OptimisedNamedParam("values"),
+          new Punc(')')
+    );
+  }
+
   private static Stream<StatementTokeniser.Token> tokenise(String statement) {
     return StatementTokeniser.tokenise(statement).stream()
           .filter(token -> !(token instanceof StatementTokeniser.Space));
