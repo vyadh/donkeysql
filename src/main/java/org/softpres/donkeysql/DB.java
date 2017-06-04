@@ -3,10 +3,12 @@
  */
 package org.softpres.donkeysql;
 
+import org.softpres.donkeysql.params.MismatchedParametersException;
 import org.softpres.donkeysql.params.ParamQuery;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,9 +58,14 @@ public class DB {
    * mainly used to allow code reuse at a call-site.
    */
   public interface MappableQuery {
+
+    /** Describe how a {@link ResultSet} can be transformed into the desired object. */
     <T> StagedQuery<T> map(RowMapper<T> mapper);
   }
 
+  /**
+   * Indicates the parameter-injection stage before a query can be executed.
+   */
   public class QueryBuilder implements MappableQuery {
     private final String sql;
 
@@ -66,19 +73,34 @@ public class DB {
       this.sql = sql;
     }
 
-    /** Convenience method to allow delegating setting of named params. */
+    /** Convenience method to allow delegating the setting of named params. */
     public NamedQueryBuilder named() {
       return new NamedQueryBuilder(this);
     }
 
-    public IndexedQueryBuilder params(Object... params) {
-      return new IndexedQueryBuilder(this, params);
-    }
-
+    /**
+     * Convenience method to provide the first named parameter for the configured SQL.
+     * The method {@link NamedQueryBuilder#param(String, Object)} allows specifying further params.
+     * An {@link UncheckedSQLException} will be thrown on execution in response to
+     * JDBC reporting a parameter is missing.
+     *
+     * @see NamedQueryBuilder#param(String, Object)
+     */
     public NamedQueryBuilder param(String name, Object value) {
       return named().param(name, value);
     }
 
+    /**
+     * Supply all the parameters required to satisfy the '?' placeholders specified
+     * in the supplied SQL.
+     *
+     * @throws MismatchedParametersException if the required param count was not the same as those supplied.
+     */
+    public IndexedQueryBuilder params(Object... params) {
+      return new IndexedQueryBuilder(this, params);
+    }
+
+    @Override
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
             connectionFactory,
@@ -97,6 +119,7 @@ public class DB {
       this.params = params;
     }
 
+    @Override
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
             connectionFactory,
@@ -115,11 +138,17 @@ public class DB {
       params = new HashMap<>();
     }
 
+    /**
+     * Allow providing successive named parameters for the configured SQL.
+     * An {@link UncheckedSQLException} will be thrown on execution in response to
+     * JDBC reporting a parameter is missing.
+     */
     public NamedQueryBuilder param(String name, Object value) {
       params.put(name, value);
       return this;
     }
 
+    @Override
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
             connectionFactory,
