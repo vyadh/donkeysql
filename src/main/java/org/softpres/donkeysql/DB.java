@@ -15,13 +15,21 @@ import java.util.Map;
  */
 public class DB {
 
+  private final ConnectionFactory connectionFactory;
+  private final boolean autoCloseConnection;
+
+  private DB(ConnectionFactory connectionFactory, boolean autoCloseConnection) {
+    this.connectionFactory = connectionFactory;
+    this.autoCloseConnection = autoCloseConnection;
+  }
+
   /**
    * Start a DB query with an explicit {@link Connection}, which assumes any connection
    * management is being done at the call site. The connection will not be automatically
    * closed.
    */
-  public static ConnectionBuilder with(Connection connection) {
-    return new ConnectionBuilder(() -> connection, false);
+  public static DB with(Connection connection) {
+    return new DB(() -> connection, false);
   }
 
   /**
@@ -30,22 +38,17 @@ public class DB {
    * when done. The connection will be automatically closed when all the results have been
    * consumed.
    */
-  public static ConnectionBuilder with(DataSource dataSource) {
-    return new ConnectionBuilder(dataSource::getConnection, true);
+  public static DB with(DataSource dataSource) {
+    return new DB(dataSource::getConnection, true);
   }
 
-  public static class ConnectionBuilder {
-    private final ConnectionFactory connectionFactory;
-    private final boolean autoClose;
-
-    ConnectionBuilder(ConnectionFactory connectionFactory, boolean autoClose) {
-      this.connectionFactory = connectionFactory;
-      this.autoClose = autoClose;
-    }
-
-    public QueryBuilder query(String sql) {
-      return new QueryBuilder(this, sql);
-    }
+  /**
+   * A query is usually constructed from a static SQL statement, the returned builder here
+   * allowing the specification of any required parameters before mapping the result for
+   * execution.
+   */
+  public QueryBuilder query(String sql) {
+    return new QueryBuilder(sql);
   }
 
   /**
@@ -56,12 +59,10 @@ public class DB {
     <T> StagedQuery<T> map(RowMapper<T> mapper);
   }
 
-  public static class QueryBuilder implements MappableQuery {
-    private final ConnectionBuilder connection;
+  public class QueryBuilder implements MappableQuery {
     private final String sql;
 
-    QueryBuilder(ConnectionBuilder connection, String sql) {
-      this.connection = connection;
+    QueryBuilder(String sql) {
       this.sql = sql;
     }
 
@@ -80,14 +81,14 @@ public class DB {
 
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
-            connection.connectionFactory,
-            connection.autoClose,
+            connectionFactory,
+            autoCloseConnection,
             mapper,
             ParamQuery.none(sql));
     }
   }
 
-  public static class IndexedQueryBuilder implements MappableQuery {
+  public class IndexedQueryBuilder implements MappableQuery {
     private final QueryBuilder builder;
     private final Object[] params;
 
@@ -98,14 +99,14 @@ public class DB {
 
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
-            builder.connection.connectionFactory,
-            builder.connection.autoClose,
+            connectionFactory,
+            autoCloseConnection,
             mapper,
             ParamQuery.indexed(builder.sql, params));
     }
   }
 
-  public static class NamedQueryBuilder implements MappableQuery {
+  public class NamedQueryBuilder implements MappableQuery {
     private final QueryBuilder builder;
     private final Map<String, Object> params;
 
@@ -121,8 +122,8 @@ public class DB {
 
     public <T> StagedQuery<T> map(RowMapper<T> mapper) {
       return new StagedQuery<>(
-            builder.connection.connectionFactory,
-            builder.connection.autoClose,
+            connectionFactory,
+            autoCloseConnection,
             mapper,
             ParamQuery.named(builder.sql, params));
     }
