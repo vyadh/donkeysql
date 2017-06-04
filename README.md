@@ -86,8 +86,8 @@ Resource Management
 -------------------
 
 The above examples assume a good connection pooling library such as [HikariCP][1] is being
-used, as this allows us to create and close a connection on the callers behalf without being
-concerned about the connection management overhead.
+used, as this allows us to create and close the `Connection` on the callers behalf without
+being concerned about the connection management overhead.
 
 The connection can also be specified explicitly such as the following.
 
@@ -102,8 +102,21 @@ The connection can also be specified explicitly such as the following.
   }
 ```
 
-This mechanism should also be used if not consuming the whole `ResultSet` in order to
-close the `Connection` appropriately.
+Sometimes it may not be necessary for the use-site to consume the entire `ResultSet`.
+The `Stream` exposed is resource-bound however, and the underlying resources can be closed
+explicitly using the try-with-resources construct as follows.
+
+```java
+    StagedQuery<String> query = DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE legs >= 5")
+          .map(resultSet -> resultSet.getString("name"));
+
+    try (Stream<String> results = query.execute()) {
+      Optional<String> first = results.findFirst();
+
+      // ...
+    }
+```
 
 Exceptions
 ----------

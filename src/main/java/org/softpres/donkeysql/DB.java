@@ -15,10 +15,21 @@ import java.util.Map;
  */
 public class DB {
 
+  /**
+   * Start a DB query with an explicit {@link Connection}, which assumes any connection
+   * management is being done at the call site. The connection will not be automatically
+   * closed.
+   */
   public static ConnectionBuilder with(Connection connection) {
     return new ConnectionBuilder(() -> connection, false);
   }
 
+  /**
+   * Start a DB query with the specified DataSource, which assumes any connection management
+   * is either being done by an underlying pool, or that it is okay to close the connection
+   * when done. The connection will be automatically closed when all the results have been
+   * consumed.
+   */
   public static ConnectionBuilder with(DataSource dataSource) {
     return new ConnectionBuilder(dataSource::getConnection, true);
   }
@@ -54,7 +65,7 @@ public class DB {
       this.sql = sql;
     }
 
-    /** Convenience method to allow delegating setting named params. */
+    /** Convenience method to allow delegating setting of named params. */
     public NamedQueryBuilder named() {
       return new NamedQueryBuilder(this);
     }

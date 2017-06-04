@@ -22,7 +22,12 @@ public class StagedQuery<T> {
   private final RowMapper<T> mapper;
   private final ParamQuery query;
 
-  StagedQuery(ConnectionFactory connectionFactory, boolean closeConnection, RowMapper<T> mapper, ParamQuery query) {
+  StagedQuery(
+        ConnectionFactory connectionFactory,
+        boolean closeConnection,
+        RowMapper<T> mapper,
+        ParamQuery query) {
+
     this.connectionFactory = connectionFactory;
     this.closeConnection = closeConnection;
     this.mapper = mapper;
@@ -41,6 +46,16 @@ public class StagedQuery<T> {
   /**
    * Execute the query by creating the required connection, executing the prepared statement,
    * and performing the mapping of results using the previously supplied mapping function.
+   * <p/>
+   * Important Note: If the Stream is not consumed entirely, the underlying JDBC resources will not
+   * be closed. This can be done explicitly using the try-with-resources construct.
+   * <pre>
+   *   StagedQuery<String> query = DB.with(dataSource).query(sql).map(this::mapping)
+   *   try (Stream<String> results = query.execute()) {
+   *     String first = results.findFirst();
+   *     ...
+   *   }
+   * </pre>
    */
   public Stream<T> execute() {
     try {

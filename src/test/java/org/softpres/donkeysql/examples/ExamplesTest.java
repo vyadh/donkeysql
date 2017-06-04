@@ -7,12 +7,14 @@ package org.softpres.donkeysql.examples;
 import org.junit.Before;
 import org.junit.Test;
 import org.softpres.donkeysql.DB;
+import org.softpres.donkeysql.StagedQuery;
 import org.softpres.donkeysql.TestDB;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,12 +97,26 @@ public class ExamplesTest {
   @Test
   public void queryWithExplicitConnection() throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      Stream<String> results = DB.with(connection)
+      StagedQuery<String> query = DB.with(connection)
             .query("SELECT name FROM animals WHERE legs >= 5")
-            .map(resultSet -> resultSet.getString("name"))
+            .map(resultSet -> resultSet.getString("name"));
+      Stream<String> results = query
             .execute();
 
       assertThat(results).containsExactly("spider", "ant", "beetle");
+    }
+  }
+
+  @Test
+  public void queryWithExplicitClose() throws SQLException {
+    StagedQuery<String> query = DB.with(dataSource)
+          .query("SELECT name FROM animals WHERE legs >= 5")
+          .map(resultSet -> resultSet.getString("name"));
+
+    try (Stream<String> results = query.execute()) {
+      Optional<String> first = results.findFirst();
+
+      assertThat(first.orElse("")).isIn("spider", "ant", "beetle");
     }
   }
 
